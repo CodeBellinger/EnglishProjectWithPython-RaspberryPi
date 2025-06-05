@@ -1,12 +1,11 @@
 # remote_client.py
 import socket
 import sys
-import termios # Only for Linux/macOS
-import tty    # Only for Linux/macOS
+import msvcrt # Import this at the top of your file
 
 # IP-Adresse deines Raspberry Pis (ersetze DIESE durch die tatsächliche IP!)
 # Du findest die IP-Adresse deines Raspberry Pi, indem du `hostname -I` im Terminal eingibst.
-RPI_IP = 'DEINE_RASPBERRY_PI_IP'
+RPI_IP = '192.168.1.2'
 PORT = 5000
 
 def send_key(key):
@@ -15,18 +14,8 @@ def send_key(key):
         print(f"Sent: {key}")
 
 def getch():
-    """Reads a single character from stdin without buffering."""
-    # This function is platform-dependent.
-    # On Windows, you might use `msvcrt.getch()`.
-    # This example is for Linux/macOS.
-    fd = sys.stdin.fileno()
-    old_settings = termios.tcgetattr(fd)
-    try:
-        tty.setraw(sys.stdin.fileno())
-        ch = sys.stdin.read(1)
-    finally:
-        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-    return ch
+    """Reads a single character from stdin without buffering (Windows compatible)."""
+    return msvcrt.getch().decode('utf-8') # Decode byte to string
 
 if __name__ == "__main__":
     print(f"Sending commands to {RPI_IP}:{PORT}")
