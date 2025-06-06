@@ -1,0 +1,90 @@
+name: ✨ Feature Request
+description: Suggest an idea or enhancement for this project
+title: 'feature: [Brief, Descriptive Title]' # Conventional Commit style prefix
+labels: ['enhancement', 'needs-triage'] # Common labels for new features
+assignees: [] # Leave empty for no default assignees
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to suggest a new feature!
+        Please fill out the form below with as much detail as possible to help us understand your proposal.
+
+  - type: textarea
+    id: problem-statement
+    attributes:
+      label: 🚀 Problem Statement / Use Case
+      description: |
+        Clearly describe the problem you're trying to solve or the use case this feature addresses.
+        *What pain point does this feature alleviate?*
+        *Why is this feature needed?*
+        *Who is impacted by this problem?*
+      placeholder: |
+        Example: "As a [type of user], I want to [goal] so that [reason]."
+        "The current [feature X] is difficult to use because [reason]."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: 💡 Proposed Solution / Idea
+      description: |
+        Describe your proposed solution or idea for the new feature.
+        *How do you envision this working?*
+        *What functionality would it provide?*
+        You can include mockups, wireframes, or pseudo-code if relevant.
+      placeholder: |
+        Example: "Add a 'Dark Mode' toggle in the user settings."
+        "Implement a new API endpoint at `/api/v2/items/search`."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives-considered
+    attributes:
+      label: 📚 Alternatives Considered
+      description: |
+        Have you thought about any other ways to solve this problem or implement this feature?
+        *What alternatives did you consider, and why did you choose this proposed solution over others?*
+        *Are there existing features or external tools that might partially address this?*
+      placeholder: |
+        Example: "Instead of a full dark mode, we could offer high-contrast settings, but this would be less comprehensive."
+        "We could use an existing library, but it doesn't meet all our requirements."
+    validations:
+      required: false
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: ✅ Acceptance Criteria (Optional)
+      description: |
+        If you have specific criteria for when this feature would be considered "done" or successful, please list them here.
+        These are conditions that must be met for the feature to be accepted.
+        *Example: "The Dark Mode toggle must persist across sessions."*
+        *Example: "The search endpoint must return results within 200ms for 90% of requests."*
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: ➕ Additional Context
+      description: |
+        Add any other relevant context, screenshots, links, or helpful information about the feature request here.
+        *What impact might this feature have on other parts of the system?*
+        *Are there any dependencies or prerequisites?*
+      placeholder: "e.g., screenshots, links to related issues, performance considerations."
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: self-check
+    attributes:
+      label: Self-Check
+      options:
+        - label: I have searched the existing issues and confirmed that this is not a duplicate.
+          required: true
+        - label: I have provided enough information to understand the problem and proposed solution.
+          required: true
