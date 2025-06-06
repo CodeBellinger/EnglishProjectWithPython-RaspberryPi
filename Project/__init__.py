@@ -5,4 +5,4 @@ from . import lava_lamp
 from . import spiral
 from . import fastLED
 from . import remote
-from . import viergewinnt
+from . import connect4

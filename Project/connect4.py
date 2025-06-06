@@ -18,9 +18,20 @@ PLAYER2_COLOR = (0, 0, 255) # Blau
 EMPTY_COLOR = (0, 0, 0)   # Schwarz
 GRID_COLOR = (50, 50, 50) # Optional: für leere Felder
 
-# Add this dictionary near your constants in viergewinnt.py
-# This is a very simple 5x5 font for uppercase letters and numbers
-# (You might need to adjust or expand this based on your display resolution and desired clarity)
+HIGHLIGHT_COLOR = (30, 30, 30) # A subtle gray to highlight the column
+# Function to get a lighter version of a player's color for the ghost chip
+def get_ghost_color(player_color, transparency_factor=0.4):
+    """Returns a lighter/more transparent version of a given color."""
+    r, g, b = player_color
+    return (
+        int(r * transparency_factor),
+        int(g * transparency_factor),
+        int(b * transparency_factor)
+    )
+
+# Get the ghost colors once
+PLAYER1_GHOST_COLOR = get_ghost_color(PLAYER1_COLOR)
+PLAYER2_GHOST_COLOR = get_ghost_color(PLAYER2_COLOR)
 
 FONT_5X5 = {
     'W': [
@@ -109,39 +120,53 @@ def animate_winner_text(winner_color, player_number):
     display_emu.show()
 
 # Spielfeld-Darstellung
-board = [[0 for _ in range(BOARD_COLS)] for _ in range(BOARD_ROWS)] # 0: leer, 1: Spieler 1, 2: Spieler 2
-
-current_player = 1
-selected_column = 0
+# Global variables for game state (ensure these are correctly defined)
+game_board = [] # Initialize your board here, e.g., with empty colors
+current_col = 0 # Current column selected by player
+current_player = 1 # 1 or 2
 game_over = False
 winner = None
 
-def draw_board():
-    display_emu.fill(EMPTY_COLOR)
+# Helper function to find the next empty row in a column
+def get_landing_row(col):
+    for r in range(BOARD_ROWS -1, -1, -1): # Iterate from bottom up
+        if game_board[r][col] == EMPTY_COLOR:
+            return r
+    return -1 # Column is full
 
-    # Zeichne das Spielfeld von unten nach oben
+def draw_board():
+    global game_board, current_col, current_player
+
+    # 1. Clear the entire display or fill with background (optional, but good for clean redraws)
+    # display.fill(EMPTY_COLOR) # Or a background color
+
+    # 2. Draw Column Highlight
+    # Iterate through all cells in the current_col and apply highlight
+    for r in range(BOARD_ROWS):
+        # We use set_xy(x,y,color) in display module
+        # Note: (current_col, r) means column then row, check your display.set_xy for correct order.
+        # Assuming display.set_xy uses (column, row)
+        display_emu.set_xy((current_col, r), HIGHLIGHT_COLOR)
+
+    # 3. Draw Ghost Chip
+    if not game_over: # Only show ghost chip if game is active
+        landing_row = get_landing_row(current_col)
+        if landing_row != -1: # If column is not full
+            ghost_color = PLAYER1_GHOST_COLOR if current_player == 1 else PLAYER2_GHOST_COLOR
+            display_emu.set_xy((current_col, landing_row), ghost_color)
+
+    # 4. Draw Actual Game Chips (these will overwrite the highlight/ghost where chips exist)
     for r in range(BOARD_ROWS):
         for c in range(BOARD_COLS):
-            pixel_color = EMPTY_COLOR
-            if board[r][c] == 1:
-                pixel_color = PLAYER1_COLOR
-            elif board[r][c] == 2:
-                pixel_color = PLAYER2_COLOR
-            
-            display_y = (HEIGHT - BOARD_ROWS) + r
-            # OLD: display_emu.set_xy((display_y, c), pixel_color) # This was the (y,x) swap
-            # NEW: Back to (x, y) after display_emu refactor
-            display_emu.set_xy(c, display_y, pixel_color) 
+            color = game_board[r][c]
+            # Draw empty grid cells for visual separation if desired, or just actual chips
+            if color == EMPTY_COLOR:
+                # display.set_xy((c, r), GRID_COLOR) # Optional: if you have a grid
+                pass # Don't draw empty cells, let highlight show through
+            else:
+                display_emu.set_xy((c, r), color)
 
-    # Zeichne den ausgewählten Chip über der Spalte
-    if not game_over:
-        # OLD: display_emu.set_xy((0, selected_column), PLAYER1_COLOR) # This was the (y,x) swap
-        # NEW: Back to (x, y) after display_emu refactor
-        if current_player == 1:
-            display_emu.set_xy(selected_column, 0, PLAYER1_COLOR) # (x=selected_column, y=0)
-        else:
-            display_emu.set_xy(selected_column, 0, PLAYER2_COLOR)
-    
+    # 5. Update the physical display
     display_emu.show()
 
 def drop_chip(col, player):
