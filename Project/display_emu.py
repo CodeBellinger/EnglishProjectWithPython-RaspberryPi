@@ -25,7 +25,8 @@ def show():
     accurate = cv2.resize(accurate, (256, 256), interpolation=cv2.INTER_NEAREST)
     img = Image.fromarray(accurate)
 
-    clear_output(wait=True) # This clears the previous output in the cell
+    # Remove clear_output to prevent the image from disappearing
+    # clear_output(wait=True) # This clears the previous output in the cell
 
     if handle is None:
         # If this is the first time show() is called, create a new display handle
