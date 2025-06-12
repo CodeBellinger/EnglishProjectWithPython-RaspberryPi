@@ -66,7 +66,7 @@ def draw_char(char, start_x, start_y, color):
     for r_offset, row_pattern in enumerate(char_pixels):
         for c_offset, pixel_val in enumerate(row_pattern):
             if pixel_val == '1':
-                display_emu.set_xy(start_x + c_offset, start_y + r_offset, color)
+                display_emu.set_xy((start_y + c_offset, start_x + r_offset), color)
 
 def animate_winner_text(winner_color, player_number):
     # Text to display
@@ -144,7 +144,7 @@ def draw_board(blink_state = False):
     global game_over, game_board, current_column, current_player, chip_falling
 
     # Clear the entire display or fill with background (optional, but good for clean redraws)
-    display_emu.pixels[:, :, :] = EMPTY_COLOR  # Now correctly clears with (0,0,0)
+    display_emu.fill(EMPTY_COLOR)  # Now correctly clears with (0,0,0)
 
     # Draw Ghost Chip (with blinking effect)
     if not game_over and not chip_falling:  # Only show ghost chip if the game is active
@@ -153,14 +153,14 @@ def draw_board(blink_state = False):
             # Only show ghost chip if not blinking or in visible state
             if not blink_state:
                 ghost_color = PLAYER1_GHOST_COLOR if current_player == 1 else PLAYER2_GHOST_COLOR
-                display_emu.set_xy(current_column, landing_row, ghost_color)
+                display_emu.set_xy((landing_row, current_column), ghost_color)
 
     # Draw Actual Game Chips (game_board now stores colors directly)
     for r in range(BOARD_ROWS):
         for c in range(BOARD_COLS):
             pixel_color = game_board[r][c] # This will be (0,0,0), PLAYER1_COLOR, or PLAYER2_COLOR
             if pixel_color != EMPTY_COLOR: # Only draw if it's not empty
-                display_emu.set_xy(c, r, pixel_color)
+                display_emu.set_xy((r, c), pixel_color)
 
     # Update the physical display
     display_emu.show()
@@ -182,7 +182,7 @@ def drop_chip(col, player):
         # Store player's color directly in the board during animation
         game_board[r_anim][col] = chip_color
         draw_board() # Let draw_board handle color conversion
-        time.sleep(0.1) # Speed of falling animation
+        time.sleep(0.5) # Speed of falling animation
         if r_anim < row: # Clear previous falling chip position
             game_board[r_anim][col] = EMPTY_COLOR # Now clears with (0,0,0)
 
@@ -213,7 +213,7 @@ def draw_board_without_preview():
     for r in range(BOARD_ROWS):
         for c in range(BOARD_COLS):
             pixel_color = game_board[r][c] # Already the correct color
-            display_emu.set_xy(c, r, pixel_color)
+            display_emu.set_xy((r, c), pixel_color)
     display_emu.show()
 
 def animate_fireworks(winner_color):
@@ -230,7 +230,7 @@ def animate_fireworks(winner_color):
         # --- Launch phase ---
         for y in range(start_y, random.randint(3, display_emu.height // 2), -1): # Shoot upwards
             display_emu.fill(EMPTY_COLOR) # Clear previous frame (now (0,0,0))
-            display_emu.set_xy(start_x, y, winner_color)
+            display_emu.set_xy((y, start_x), winner_color)
             display_emu.show()
             time.sleep(0.05)
 
@@ -279,7 +279,7 @@ def animate_fireworks(winner_color):
                         faded_g = int(max(0, min(255, g * fade_factor)))
                         faded_b = int(max(0, min(255, b * fade_factor)))
                         faded_color = (faded_r, faded_g, faded_b)
-                        display_emu.set_xy(draw_x, draw_y, faded_color)
+                        display_emu.set_xy((draw_y, draw_x), faded_color)
             
             display_emu.show()
             time.sleep(0.05)
@@ -398,7 +398,7 @@ def handle_input(key):
 def draw_pixel(x, y, color):
     # Ensure coordinates are within display boundaries
     if 0 <= x < display_emu.width and 0 <= y < display_emu.height:
-        display_emu.set_xy(x, y, color)
+        display_emu.set_xy((y, x), color)
 
 def draw_text(x_start, y_start, text, color, font=FONT_5X5):
     current_x = x_start

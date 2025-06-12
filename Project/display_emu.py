@@ -16,41 +16,25 @@ def brighten(v):
     return 256 - 256/(float(v)+1)
 
 def show():
-    global handle # Declare handle as global so we can modify it
-    accurate = pixels.copy()
+    global handle
+    accurate=pixels.copy()
     for i in range(len(pixels)):
         for j in range(len(pixels[i])):
             accurate[i][j] = (brighten(pixels[i][j][0]), brighten(pixels[i][j][1]), brighten(pixels[i][j][2]))
-    
+    #accurate = cv2.cvtColor(accurate, cv2.COLOR_RGB2BGR)
     accurate = cv2.resize(accurate, (256, 256), interpolation=cv2.INTER_NEAREST)
     img = Image.fromarray(accurate)
 
-    # Remove clear_output to prevent the image from disappearing
-    # clear_output(wait=True) # This clears the previous output in the cell
+    clear_output(wait=True) 
+    display(img, display_id=True)  # First time
+    
+    time.sleep(0.001)
 
-    if handle is None:
-        # If this is the first time show() is called, create a new display handle
-        handle = display(img, display_id=True)
-    else:
-        # For subsequent calls, update the existing display using the handle
-        handle.update(img)
-
-    # You can adjust this sleep for animation speed, but a very small one is fine for updating
-    time.sleep(0.001) # Small delay for rendering
-#def set_xy(pixel: tuple, color: tuple):
-#    pixels[pixel] = color
-def set_xy(x_coord: int, y_coord: int, color: tuple):
-    """
-    Sets the color of a pixel at the given (x, y) coordinates.
-    x_coord: The column index (horizontal position).
-    y_coord: The row index (vertical position).
-    color: A tuple (R, G, B) representing the color.
-    """
-    # Internally swap to (y, x) for NumPy array indexing
-    pixels[y_coord, x_coord] = color
-
-def set_i(pixel: int, color: tuple):
+def set_xy(pixel: tuple, color: tuple):
     pixels[pixel] = color
+
+#def set_i(pixel: int, color: tuple):
+#    pixels[pixel] = color
 
 def set_m(pixel_list: list):
     for pixel in pixel_list:
