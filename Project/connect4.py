@@ -1,9 +1,6 @@
-# main_connect4.py
-# If viergewinnt.py is executed directly from within the 'Project' folder,
-# or if 'Project' is added to sys.path, then direct imports are fine.
-from . import display_emu # Oder display für Raspberry Pi
+from ulib import display
+from ulib import remote
 import time
-from . import remote
 import random
 import math
 import time
@@ -66,7 +63,7 @@ def draw_char(char, start_x, start_y, color):
     for r_offset, row_pattern in enumerate(char_pixels):
         for c_offset, pixel_val in enumerate(row_pattern):
             if pixel_val == '1':
-                display_emu.set_xy((start_y + c_offset, start_x + r_offset), color)
+                display.set_xy((start_y + c_offset, start_x + r_offset), color)
 
 def animate_winner_text(winner_color, player_number):
     # Text to display
@@ -86,20 +83,20 @@ def animate_winner_text(winner_color, player_number):
                        (len(text) - 1) * current_char_spacing
     
     # Calculate starting X position to center the text
-    start_text_x = (display_emu.width - total_text_width) // 2
+    start_text_x = (display.width - total_text_width) // 2
     
     # Ensure start_text_x is not negative (it won't be with "WIN" and 0 spacing)
     if start_text_x < 0:
         start_text_x = 0
     
     # Calculate starting Y position to center the text vertically
-    start_text_y = (display_emu.height - char_height) // 2
+    start_text_y = (display.height - char_height) // 2
     if start_text_y < 0:
         start_text_y = 0
 
     # Animation loop for blinking text
     for _ in range(5): # Blink 5 times (adjust as desired)
-        display_emu.fill(EMPTY_COLOR) # Clear screen for this frame
+        display.fill(EMPTY_COLOR) # Clear screen for this frame
         current_x = start_text_x
         # Iterate over characters in the text string
         for char in text:
@@ -107,16 +104,16 @@ def animate_winner_text(winner_color, player_number):
                 draw_char(char.upper(), current_x, start_text_y, winner_color)
             current_x += (char_width + current_char_spacing) # Use the adjusted spacing
 
-        display_emu.show()
+        display.show()
         time.sleep(0.8) # Text visible for 0.8 seconds
 
-        display_emu.fill(EMPTY_COLOR) # Clear screen for blink off
-        display_emu.show()
+        display.fill(EMPTY_COLOR) # Clear screen for blink off
+        display.show()
         time.sleep(0.3) # Text off for 0.3 seconds
 
     # Ensure display is cleared after the animation finishes
-    display_emu.fill(EMPTY_COLOR)
-    display_emu.show()
+    display.fill(EMPTY_COLOR)
+    display.show()
 
 # Spielfeld-Darstellung
 # Global variables for game state (ensure these are correctly defined)
@@ -144,7 +141,7 @@ def draw_board(blink_state = False):
     global game_over, game_board, current_column, current_player, chip_falling
 
     # Clear the entire display or fill with background (optional, but good for clean redraws)
-    display_emu.fill(EMPTY_COLOR)  # Now correctly clears with (0,0,0)
+    display.fill(EMPTY_COLOR)  # Now correctly clears with (0,0,0)
 
     # Draw Ghost Chip (with blinking effect)
     if not game_over and not chip_falling:  # Only show ghost chip if the game is active
@@ -153,17 +150,17 @@ def draw_board(blink_state = False):
             # Only show ghost chip if not blinking or in visible state
             if not blink_state:
                 ghost_color = PLAYER1_GHOST_COLOR if current_player == 1 else PLAYER2_GHOST_COLOR
-                display_emu.set_xy((landing_row, current_column), ghost_color)
+                display.set_xy((landing_row, current_column), ghost_color)
 
     # Draw Actual Game Chips (game_board now stores colors directly)
     for r in range(BOARD_ROWS):
         for c in range(BOARD_COLS):
             pixel_color = game_board[r][c] # This will be (0,0,0), PLAYER1_COLOR, or PLAYER2_COLOR
             if pixel_color != EMPTY_COLOR: # Only draw if it's not empty
-                display_emu.set_xy((r, c), pixel_color)
+                display.set_xy((r, c), pixel_color)
 
     # Update the physical display
-    display_emu.show()
+    display.show()
 
 def drop_chip(col, player):
     global game_over, winner, chip_falling, current_player, game_board
@@ -208,30 +205,30 @@ def drop_chip(col, player):
     return True
 
 def draw_board_without_preview():
-    display_emu.fill(EMPTY_COLOR) # Now correctly fills with (0,0,0)
+    display.fill(EMPTY_COLOR) # Now correctly fills with (0,0,0)
 
     for r in range(BOARD_ROWS):
         for c in range(BOARD_COLS):
             pixel_color = game_board[r][c] # Already the correct color
-            display_emu.set_xy((r, c), pixel_color)
-    display_emu.show()
+            display.set_xy((r, c), pixel_color)
+    display.show()
 
 def animate_fireworks(winner_color):
-    display_emu.fill(EMPTY_COLOR) # Start with a black screen for fireworks (now (0,0,0))
-    display_emu.show()
+    display.fill(EMPTY_COLOR) # Start with a black screen for fireworks (now (0,0,0))
+    display.show()
     time.sleep(0.5)
 
     num_fireworks = 3 # Number of firework bursts
     for _ in range(num_fireworks):
         # Random starting point for the firework (bottom half of the display)
-        start_x = random.randint(0, display_emu.width - 1)
-        start_y = display_emu.height - 1 # Start from the bottom
+        start_x = random.randint(0, display.width - 1)
+        start_y = display.height - 1 # Start from the bottom
 
         # --- Launch phase ---
-        for y in range(start_y, random.randint(3, display_emu.height // 2), -1): # Shoot upwards
-            display_emu.fill(EMPTY_COLOR) # Clear previous frame (now (0,0,0))
-            display_emu.set_xy((y, start_x), winner_color)
-            display_emu.show()
+        for y in range(start_y, random.randint(3, display.height // 2), -1): # Shoot upwards
+            display.fill(EMPTY_COLOR) # Clear previous frame (now (0,0,0))
+            display.set_xy((y, start_x), winner_color)
+            display.show()
             time.sleep(0.05)
 
         # --- Explosion phase ---
@@ -256,7 +253,7 @@ def animate_fireworks(winner_color):
             })
 
         for t in range(20): # Number of animation frames for explosion
-            display_emu.fill(EMPTY_COLOR) # Now correctly clears with (0,0,0)
+            display.fill(EMPTY_COLOR) # Now correctly clears with (0,0,0)
             
             for spark in sparks:
                 # Update position
@@ -271,7 +268,7 @@ def animate_fireworks(winner_color):
                 if spark['life'] > 0:
                     draw_x = int(round(spark['x']))
                     draw_y = int(round(spark['y']))
-                    if 0 <= draw_x < display_emu.width and 0 <= draw_y < display_emu.height:
+                    if 0 <= draw_x < display.width and 0 <= draw_y < display.height:
                         # Fade color based on life
                         r, g, b = spark['color']
                         fade_factor = spark['life'] / (random.uniform(0.5, 1.5))
@@ -279,9 +276,9 @@ def animate_fireworks(winner_color):
                         faded_g = int(max(0, min(255, g * fade_factor)))
                         faded_b = int(max(0, min(255, b * fade_factor)))
                         faded_color = (faded_r, faded_g, faded_b)
-                        display_emu.set_xy((draw_y, draw_x), faded_color)
+                        display.set_xy((draw_y, draw_x), faded_color)
             
-            display_emu.show()
+            display.show()
             time.sleep(0.05)
 
         time.sleep(0.2) # Pause between fireworks bursts
@@ -397,8 +394,8 @@ def handle_input(key):
 # --- Utility Functions for Display ---
 def draw_pixel(x, y, color):
     # Ensure coordinates are within display boundaries
-    if 0 <= x < display_emu.width and 0 <= y < display_emu.height:
-        display_emu.set_xy((y, x), color)
+    if 0 <= x < display.width and 0 <= y < display.height:
+        display.set_xy((y, x), color)
 
 def draw_text(x_start, y_start, text, color, font=FONT_5X5):
     current_x = x_start
@@ -412,7 +409,7 @@ def draw_text(x_start, y_start, text, color, font=FONT_5X5):
         current_x += len(font[char][0]) + 1 # Move to the next character position (5 width + 1 spacing)
 
 def clear_display():
-    display_emu.fill(EMPTY_COLOR)
+    display.fill(EMPTY_COLOR)
 
 def reset_game():
     global game_board, current_player, game_over, current_column, current_row, winner, chip_falling
