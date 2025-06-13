@@ -4,9 +4,9 @@ import sys
 import msvcrt # Import this at the top of your file
 
 # IP-Adresse deines Raspberry Pis (ersetze DIESE durch die tatsächliche IP!)
-# Du findest die IP-Adresse deines Raspberry Pi, indem du `hostname -I` im Terminal eingibst.
-RPI_IP = '192.168.1.119'
+# Du findest die IP-Adresse deines Raspberry Pi, indem du `hostname -I`, 'ipconfig', 'nmap 192.168.1.119' im Terminal eingibst.
 #RPI_IP = '127.0.0.1' # Localhost for testing on the same machine
+RPI_IP = '192.168.1.119'
 PORT = 5000
 
 def send_key(key):
