@@ -1,14 +1,18 @@
 # maze.py
 # This program generates and displays a unique maze on a 16x16 LED-Box.
-# The user controls a dot (player) using arrow keys (via remote_client.py)
+# The user controls a dot (player) using arrow keys (via remote_client_maze.py)
 # and aims to reach a destination. Upon reaching the destination, it displays
 # "WIN" and the time taken.
 
 # Imports for LED-Box interaction and game logic
-import ulib # Provides access to display and remote modules
+#import ulib: Provides access to display and remote modules
+from ulib import display_emu as display
+from ulib import remote
 import time # For timing the game and delays
 import random # For maze generation and random placement
+import sys
 import math # Not strictly needed for this maze, but good to include if complex visuals were added
+from collections import deque # Needed for the longest path (BFS) algorithm
 
 # --- Constants ---
 # LED-Box dimensions
@@ -16,8 +20,8 @@ WIDTH = 16
 HEIGHT = 16
 
 # Colors (RGB tuples)
-COLOR_WALL = (50, 50, 50)       # Dark gray for maze walls
-COLOR_PATH = (0, 0, 0)          # Black for empty paths
+COLOR_WALL = (0, 0, 0)          # Black for maze walls
+COLOR_PATH = (255, 255, 255)    # White for empty path
 COLOR_PLAYER = (0, 255, 0)      # Green for the player dot
 COLOR_START = (0, 0, 255)       # Blue for the starting point
 COLOR_DESTINATION = (255, 0, 0) # Red for the destination point
@@ -76,11 +80,11 @@ def create_grid(rows, cols, initial_value):
     """Initializes a 2D grid with a given initial value."""
     return [[initial_value for _ in range(cols)] for _ in range(rows)]
 
-def is_valid(r, c, rows, cols):
+def is_valid(r, c, logical_rows, logical_cols):
     """Checks if a given coordinate is within the grid boundaries."""
-    return 0 <= r < rows and 0 <= c < cols
+    return 0 <= r < logical_rows and 0 <= c < logical_cols
 
-def generate_maze_recursive_backtracker(grid_rows, grid_cols):
+def generate_maze_recursive_backtracker():
     """
     Generates a maze using the Recursive Backtracker algorithm.
     The maze is represented by a grid of 0s (paths) and 1s (walls).
@@ -88,34 +92,15 @@ def generate_maze_recursive_backtracker(grid_rows, grid_cols):
     """
     global maze
 
-    # The actual maze grid needs to be larger to represent walls between cells.
-    # We will work on a grid where cells are (2r+1, 2c+1) and walls are even indices.
-    # Final maze will be WIDTH x HEIGHT.
-    # Start with all walls, then carve paths.
-    # Example: A 2x2 logical maze needs (2*2+1)x(2*2+1) = 5x5 grid.
-    # For a 16x16 display, we consider it as 8x8 "cells" where each cell is 2x2 actual pixels,
-    # and walls are 1 pixel thick.
-    # Let's simplify and make the internal maze generation slightly smaller
-    # and then scale it to fit the 16x16 display, ensuring start/end are on paths.
+    # Initialize the entire physical maze grid to all walls (1)
+    maze = create_grid(HEIGHT, WIDTH, 1)
 
-    # Let's generate a maze that is (WIDTH/2) x (HEIGHT/2) cells for simplicity,
-    # and then scale it up to the display.
-    # This means each cell in the logical maze corresponds to 2x2 pixels on the display,
-    # and walls are 1 pixel thick.
-    
     # Grid for maze generation logic (e.g., 8x8 cells for a 16x16 display)
-    logical_rows = HEIGHT // 2
-    logical_cols = WIDTH // 2
-
-    # Initialize all cells as unvisited and all walls as present
-    # We use a representation where grid[r][c] is 0 for wall, 1 for path
-    # and initially everything is a wall.
-    # This will be simpler: 0=path, 1=wall in the final 16x16 grid
-    maze = create_grid(HEIGHT, WIDTH, 1) # Initialize all as walls (1)
+    logical_rows = (HEIGHT - 1) // 2
+    logical_cols = (WIDTH - 1) // 2
 
     # Visited grid for the logical cells
     visited = create_grid(logical_rows, logical_cols, False)
-
     # Stack for DFS (Depth-First Search)
     stack = []
 
@@ -135,79 +120,130 @@ def generate_maze_recursive_backtracker(grid_rows, grid_cols):
 
         # Define possible neighbors and the wall positions between them
         neighbors = []
-        # (dr, dc) for neighbor, (wr, wc) for wall
+        # Define logical moves (dr, dc) for neighbor
         possible_moves = [
-            ((-1, 0), (-1, 0)), # Up
-            ((1, 0), (1, 0)),   # Down
-            ((0, -1), (0, -1)), # Left
-            ((0, 1), (0, 1))    # Right
+            (-1, 0), # Up
+            (1, 0),  # Down
+            (0, -1), # Left
+            (0, 1)  # Right
         ]
 
         # Find unvisited neighbors
-        for (dr, dc), (wr, wc) in possible_moves:
+        for dr, dc in possible_moves:
             next_logical_r, next_logical_c = current_logical_r + dr, current_logical_c + dc
-            if is_valid(next_logical_r, next_logical_c, logical_rows, logical_cols) and \
-               not visited[next_logical_r][next_logical_c]:
-                neighbors.append(((next_logical_r, next_logical_c), (current_logical_r * 2 + 1 + wr, current_logical_c * 2 + 1 + wc)))
+            # Ensure wall is actually a wall before carving
+            if (is_valid(next_logical_r, next_logical_c, logical_rows, logical_cols) and
+               not visited[next_logical_r][next_logical_c]):
+                # Store logical next and original dr,dc
+                neighbors.append((next_logical_r, next_logical_c, dr, dc))
 
         if neighbors:
             # Pick a random unvisited neighbor
-            (next_logical_r, next_logical_c), (wall_r, wall_c) = random.choice(neighbors)
-
-            # Carve a path to the chosen neighbor cell
+            (next_logical_r, next_logical_c, dr, dc) = random.choice(neighbors)
+            # Carve a path to the chosen neighbor cell (physical coord)
             maze[next_logical_r * 2 + 1][next_logical_c * 2 + 1] = 0
+            wall_r = current_logical_r * 2 + 1 + dr
+            wall_c = current_logical_c * 2 + 1 + dc
+            maze[wall_r][wall_c] = 0
             
-            # Carve the wall between current and chosen neighbor
-            # The wall is at the mid-point between the center of current cell and next cell.
-            # Example: Current (1,1), next (1,3). Wall is at (1,2).
-            # This is simpler if we define walls relative to the current cell
-            # The wall is *between* the current cell (2r+1, 2c+1) and the next cell (2r_next+1, 2c_next+1)
-            # The wall pixel will be at (2r+1+dr, 2c+1+dc)
-            maze[current_logical_r * 2 + 1 + dr][current_logical_c * 2 + 1 + dc] = 0
-
-            # Mark the new cell as visited
+            # Mark the new cell as visited and add to stack
             visited[next_logical_r][next_logical_c] = True
             stack.append((next_logical_r, next_logical_c))
         else:
             # No unvisited neighbors, backtrack
             stack.pop()
-    
-    # Ensure a border of walls around the maze (if not already present from initial setup)
-    for r in range(HEIGHT):
-        maze[r][0] = 1
-        maze[r][WIDTH - 1] = 1
-    for c in range(WIDTH):
-        maze[0][c] = 1
-        maze[HEIGHT - 1][c] = 1
 
+    print("[DEBUG] Maze generated.")
+    
+def find_farthest_path_pixel(start_node):
+    """
+    Performs a Breadth-First Search (BFS) starting from a given node
+    to find the pixel on the path that is farthest away.
+    Returns the coordinates of the farthest pixel.
+    """
+    q = deque([(start_node, 0)]) # Queue stores (node, distance)
+    visited = {start_node}
+    farthest_node = start_node
+    max_dist = 0
+
+    while q:
+        (r, c), dist = q.popleft()
+
+        if dist > max_dist:
+            max_dist = dist
+            farthest_node = (r, c)
+
+        # Check neighbors (up, down, left, right)
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            nr, nc = r + dr, c + dc
+
+            # Check if neighbor is a valid path pixel and not visited
+            if (is_valid_physical_cell(nr, nc) and
+                maze[nr][nc] == 0 and
+                (nr, nc) not in visited):
+                visited.add((nr, nc))
+                q.append(((nr, nc), dist + 1))
+
+    return farthest_node
+
+def find_dead_ends():
+    """Returns a list of all dead-end path pixels (with only one path neighbor)."""
+    dead_ends = []
+    for r in range(HEIGHT):
+        for c in range(WIDTH):
+            if maze[r][c] == 0:
+                neighbors = 0
+                for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
+                    nr, nc = r+dr, c+dc
+                    if 0 <= nr < HEIGHT and 0 <= nc < WIDTH and maze[nr][nc] == 0:
+                        neighbors += 1
+                if neighbors == 1:
+                    dead_ends.append((r, c))
+    return dead_ends
 
 def place_start_and_destination():
     """
-    Places the start and destination points randomly on paths within the maze.
-    Ensures they are not the same pixel.
+    Places start and destination at the two dead ends with the longest path between them.
     """
     global start_pos, destination_pos, player_pos
 
-    # Find all possible path pixels
-    path_pixels = []
-    for r in range(HEIGHT):
-        for c in range(WIDTH):
-            if maze[r][c] == 0: # If it's a path
-                path_pixels.append((r, c))
-
-    if not path_pixels:
-        raise ValueError("No paths found in the maze, cannot place start/destination.")
-
-    # Choose random start and destination from path pixels
-    start_pos = list(random.choice(path_pixels))
+    dead_ends = find_dead_ends()
+    if len(dead_ends) < 2:
+        raise ValueError("Not enough dead ends to place start and destination.")
     
-    # Ensure destination is different from start
-    while True:
-        destination_pos = list(random.choice(path_pixels))
-        if destination_pos != start_pos:
-            break
-            
-    player_pos[0], player_pos[1] = start_pos[0], start_pos[1] # Player starts at start_pos
+    # Find the pair of dead ends with the longest path between them
+    max_dist = -1
+    best_pair = (dead_ends[0], dead_ends[1])
+
+    for i in range(len(dead_ends)):
+        for j in range(i+1, len(dead_ends)):
+            a, b = dead_ends[i], dead_ends[j]
+            dist = path_distance(a, b)
+            if dist > max_dist:
+                max_dist = dist
+                best_pair = (a, b)
+
+    start_pos = list(best_pair[0])
+    destination_pos = list(best_pair[1])
+    player_pos[0], player_pos[1] = start_pos[0], start_pos[1]
+    print(f"[DEBUG] Start at dead end: {start_pos}, Destination at dead end: {destination_pos}, Distance: {max_dist}")
+
+def path_distance(a, b):
+    """Returns the number of steps in the shortest path between a and b in the maze."""
+    from collections import deque
+    visited = set()
+    queue = deque([(a, 0)])
+    visited.add(a)
+    while queue:
+        (r, c), dist = queue.popleft()
+        if (r, c) == b:
+            return dist
+        for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
+            nr, nc = r+dr, c+dc
+            if 0 <= nr < HEIGHT and 0 <= nc < WIDTH and maze[nr][nc] == 0 and (nr, nc) not in visited:
+                visited.add((nr, nc))
+                queue.append(((nr, nc), dist+1))
+    return -1 # Not connected (should not happen in a perfect maze)
 
 # --- Drawing Functions ---
 
@@ -220,10 +256,10 @@ def draw_char(char, start_x, start_y, color):
     for r_offset, row_pattern in enumerate(char_pixels):
         for c_offset, pixel_val in enumerate(row_pattern):
             if pixel_val == '1':
-                # Note: ulib.display.set_xy expects (row, col) or (y, x)
-                # The font patterns are usually (x_offset, y_offset)
-                # So (start_y + r_offset, start_x + c_offset) maps (y, x) correctly.
-                ulib.display.set_xy((start_y + r_offset, start_x + c_offset), color)
+                # Add boundary check before drawing
+                if 0 <= (start_y + r_offset) < HEIGHT and 0 <= (start_x + c_offset) < WIDTH:
+                    # Assuming display.set_xy takes (row, col)
+                    display.set_xy((start_y + r_offset, start_x + c_offset), color)
 
 def draw_text(x_start, y_start, text, color, font=FONT_5X5):
     """Draws a string of text on the display."""
@@ -237,8 +273,8 @@ def draw_text(x_start, y_start, text, color, font=FONT_5X5):
             for r_offset, row_pattern in enumerate(char_pattern):
                 for c_offset, pixel_status in enumerate(row_pattern):
                     if pixel_status == '1':
-                        # ulib.display.set_xy takes (y, x)
-                        ulib.display.set_xy((y_start + r_offset, current_x + c_offset), color)
+                        # display.set_xy takes (y, x)
+                        display.set_xy((y_start + r_offset, current_x + c_offset), color)
             current_x += char_width + char_spacing # Move to the next character position
         else:
             current_x += char_width + char_spacing # Still move even if char not found
@@ -246,21 +282,22 @@ def draw_text(x_start, y_start, text, color, font=FONT_5X5):
 
 def draw_maze():
     """Renders the entire maze, player, start, and destination on the LED-Box."""
-    ulib.display.fill(COLOR_PATH) # Start with a blank canvas (path color)
 
     for r in range(HEIGHT):
         for c in range(WIDTH):
             if maze[r][c] == 1: # If it's a wall
-                ulib.display.set_xy((r, c), COLOR_WALL)
+                display.set_xy((r, c), COLOR_WALL)
+            else: # It's a path
+                display.set_xy((r, c), COLOR_PATH)
 
     # Draw start and destination points
-    ulib.display.set_xy(start_pos, COLOR_START)
-    ulib.display.set_xy(destination_pos, COLOR_DESTINATION)
+    display.set_xy(tuple(start_pos), COLOR_START)
+    display.set_xy(tuple(destination_pos), COLOR_DESTINATION)
 
     # Draw player
-    ulib.display.set_xy(player_pos, COLOR_PLAYER)
+    display.set_xy(tuple(player_pos), COLOR_PLAYER)
 
-    ulib.display.show() # Push changes to the physical display
+    display.show() # Push changes to the physical display
 
 # --- Game Logic ---
 
@@ -269,21 +306,24 @@ def reset_game():
     global game_active, start_time, game_won_time
 
     print("[DEBUG] Resetting game...")
-    generate_maze_recursive_backtracker(HEIGHT, WIDTH)
+    # 1. Generate the maze structure first
+    generate_maze_recursive_backtracker()
+
+    # 2. Place start and destination on the generated paths
     place_start_and_destination()
-    
+
+    # 3. Reset game state variables
     game_active = True
     start_time = 0.0 # Reset start time
     game_won_time = 0.0 # Reset won time
 
-    ulib.display.fill(COLOR_PATH) # Clear display before drawing new maze
-    ulib.display.show()
+    display.fill(COLOR_PATH) # Clear display before drawing new maze
+    display.show()
     time.sleep(0.1) # Small delay for clear
-
+    
+    # 4. Draw the initial state
     draw_maze()
     print(f"[DEBUG] Game reset. Start: {start_pos}, Destination: {destination_pos}")
-    print(f"[DEBUG] Player at: {player_pos}")
-
 
 def handle_input(key):
     """
@@ -295,7 +335,7 @@ def handle_input(key):
     if not game_active and key not in ['ENTER']: # Allow ENTER to reset even if not active
         return # Ignore input if game is over and not a reset command
 
-    new_r, new_c = player_pos[0], player_pos[1]
+    new_r, new_c = player_pos[0], player_pos[1] # Using (x,y) or (col, row)
     moved = False
 
     if key == 'LEFT':
@@ -315,13 +355,25 @@ def handle_input(key):
             return
 
     # Check for valid move (within bounds and not a wall)
-    if is_valid(new_r, new_c, HEIGHT, WIDTH) and maze[new_r][new_c] == 0: # 0 means path
+    # The player is allowed to move to the exact start_pos or destination_pos, even if they are on the border.
+    is_move_to_border_entry = (new_r == start_pos[0] and new_c == start_pos[1])
+    is_move_to_border_exit = (new_r == destination_pos[0] and new_c == destination_pos[1])
+
+    if (is_valid_physical_cell(new_r, new_c) and # Check bounds (0 to 15)
+        maze[new_r][new_c] == 0): # Check if it's a path
+
+        # Further check: if moving to a border cell (0 or 15), it MUST be the entry/exit point
+        if (new_r == 0 or new_r == HEIGHT - 1 or new_c == 0 or new_c == WIDTH - 1) and \
+           not (is_move_to_border_entry or is_move_to_border_exit):
+            print(f"[DEBUG] Blocked move to perimeter not at entry/exit: ({new_r}, {new_c}).")
+            return # Block if it's a border move but not to entry/exit
+        
         player_pos[0], player_pos[1] = new_r, new_c
         moved = True
         if start_time == 0.0: # Start timer on first move
             start_time = time.monotonic()
             print("[DEBUG] Game timer started.")
-    elif is_valid(new_r, new_c, HEIGHT, WIDTH) and maze[new_r][new_c] == 1:
+    elif is_valid_physical_cell(new_r, new_c) and maze[new_r][new_c] == 1:
         print(f"[DEBUG] Tried to move to a wall at ({new_r}, {new_c}). Blocked.")
     else:
         print(f"[DEBUG] Tried to move out of bounds to ({new_r}, {new_c}). Blocked.")
@@ -336,39 +388,16 @@ def handle_input(key):
             print(f"[DEBUG] Player reached destination! Time: {game_won_time:.2f}s")
             display_win_screen(game_won_time)
 
-
 def display_win_screen(final_time):
     """Displays "WIN" and the elapsed time on the LED-Box."""
-    ulib.display.fill(COLOR_PATH) # Clear screen
+    display.fill(COLOR_PATH) # Clear screen
     
     # Display "WIN"
-    # Centering "WIN" (3 chars * 5 width + 2 spacing = 17 pixels, slightly wider than 16, so adjust)
-    # Let's target horizontal center for a 16 pixel width.
-    # 3 chars * 5 pixels/char = 15 pixels. So, 16 - 15 = 1 pixel difference.
-    # We can center it roughly at x=0.5, but pixels are integers.
-    # Let's say start_x = 0 to make "W" start at column 0.
     draw_text(0, 3, "WIN", COLOR_TEXT) # Row 3 is a good vertical center for 5x5 font
 
     # Display time (e.g., "12.34s")
     time_str = f"{final_time:.1f}s" # Format to 1 decimal place
-    # Max 5 chars for time + 's', e.g., "99.9s", 4.0s
-    # Calculate position to center time string roughly
-    # Char width 5, spacing 1. So 6 pixels per char + last char.
-    # "12.3s" is 5 chars * 6 - 1 = 29. No, this font is compact.
-    # Each char is 5 pixels wide. Spacing 1.
-    # "99.9s" (5 characters including '.') means 5*5 + 4*1 = 29 pixels (too wide)
-    # We need to render it carefully.
-    # Let's render time below WIN, maybe slightly offset.
-    # If using 5x5 font and 1 pixel spacing:
-    # A 4-char string "X.Ys" is 4*5 + 3*1 = 23 pixels wide. Still too wide.
-    # Let's reduce spacing for numbers. Or make font smaller if possible (not with this font).
-
-    # For 16x16, let's simplify and just place it after WIN.
-    # Or, try to fit max 3 digits + '.s'
-    # "9.9s" (4 chars) -> 4*5 = 20 (too wide).
-    # "9s" (2 chars) -> 2*5 = 10 pixels wide. This can be centered.
-
-    # Let's adjust draw_text to center for this resolution
+    
     # Calculate width of the specific time string
     text_width_pixels = sum(len(FONT_5X5.get(c.upper(), ['00000'])[0]) for c in time_str) + \
                         (len(time_str) - 1) * 1 # 1 pixel spacing
@@ -382,7 +411,7 @@ def display_win_screen(final_time):
     # "WIN" ends around row 3+5 = 8. So put time at row 9 or 10.
     draw_text(text_start_x, 9, time_str, COLOR_TEXT)
 
-    ulib.display.show()
+    display.show()
     # Game is inactive, will wait for ENTER to reset in game_loop
 
 # --- Remote Input Setup ---
@@ -390,18 +419,18 @@ def display_win_screen(final_time):
 def setup_remote_bindings():
     """Sets up the remote key bindings for player movement."""
     # Clear existing bindings to prevent duplicates
-    ulib.remote.bindings = {}
-    ulib.remote.all_binds = []
+    remote.bindings = {}
+    remote.all_binds = []
 
     # Bind arrow keys to handle_input
-    # These key names correspond to what remote_client.py sends
-    ulib.remote.bind_key('UP', lambda key: handle_input('UP'))
-    ulib.remote.bind_key('DOWN', lambda key: handle_input('DOWN'))
-    ulib.remote.bind_key('LEFT', lambda key: handle_input('LEFT'))
-    ulib.remote.bind_key('RIGHT', lambda key: handle_input('RIGHT'))
+    # These key names correspond to what remote_client_maze.py sends
+    remote.bind_key('UP', lambda key: handle_input('UP'))
+    remote.bind_key('DOWN', lambda key: handle_input('DOWN'))
+    remote.bind_key('LEFT', lambda key: handle_input('LEFT'))
+    remote.bind_key('RIGHT', lambda key: handle_input('RIGHT'))
     
     # Bind ENTER to reset the game
-    ulib.remote.bind_key('ENTER', lambda key: handle_input('ENTER'))
+    remote.bind_key('ENTER', lambda key: handle_input('ENTER'))
     print("[DEBUG] Remote bindings set up.")
 
 
@@ -411,13 +440,13 @@ def game_loop():
     """Main loop for the maze game."""
     global game_active
 
-    ulib.remote.start_listening() # Start listening for remote commands
+    remote.start_listening() # Start listening for remote commands
     setup_remote_bindings()       # Set up the key bindings
 
     print("--- Running Maze Game ---")
     print("Connect to the LED-Box WiFi, access http://led-box.bbrouter/ on your browser.")
     print("Upload this 'maze.py' as a program.")
-    print("Run 'remote_client.py' on your local computer to send inputs (UP, DOWN, LEFT, RIGHT, ENTER).")
+    print("Run 'remote_client_maze.py' on your local computer to send inputs (UP, DOWN, LEFT, RIGHT, ENTER).")
     print("Press 'ENTER' to start/reset the game after winning.")
     print("To stop this game loop, interrupt the kernel.")
 
@@ -437,9 +466,25 @@ def game_loop():
         print("\n--- Game loop interrupted by user. ---")
     finally:
         print("[DEBUG] Game loop ending. Stopping remote listener.")
-        ulib.remote.stop_listening() # Ensure listener is stopped on exit
+        remote.stop_listening() # Ensure listener is stopped on exit
 
 # --- Entry Point ---
+# Added is_valid_physical_cell as a general utility
+def is_valid_physical_cell(r, c):
+    """Checks if a given physical coordinate is within the display boundaries."""
+    return 0 <= r < HEIGHT and 0 <= c < WIDTH
+
 if __name__ == "__main__":
+    # This block is for initial setup specific to the emulator or notebook environment.
+    if 'display_emu' in sys.modules and not hasattr(display, 'pixels'):
+        print("[DEBUG] Initializing display_emu pixels for notebook environment.")
+        try:
+            import numpy as np # Ensure numpy is imported if display_emu needs it
+            display.pixels = np.zeros((display.height, display.width, 3), dtype=np.uint8)
+        except ImportError:
+            print("[ERROR] NumPy not found. Emulator display will not work correctly.")
+            print("Please ensure your ulib/display.py (emulator) is correctly configured with numpy.")
+            display.pixels = [[(0,0,0) for _ in range(display.width)] for _ in range(display.height)]
+
     game_loop()
 
