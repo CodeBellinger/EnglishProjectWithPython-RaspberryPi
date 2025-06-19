@@ -54,7 +54,7 @@ if __name__ == "__main__":
         if char == 'QUIT_SIGNAL' or char == 'Q':
             print("Quitting client.")
             break
-
+        # Player 1 controls (using arrow keys for distinct actions)
         if char == 'A':
             send_key('LEFT')
         elif char == 'D':

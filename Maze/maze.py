@@ -26,53 +26,35 @@ COLOR_PLAYER = (0, 255, 0)      # Green for the player dot
 COLOR_START = (0, 0, 255)       # Blue for the starting point
 COLOR_DESTINATION = (255, 0, 0) # Red for the destination point
 COLOR_TEXT = (255, 255, 255)    # White for "WIN" text and time
+COLOR_GOLD = (255, 215, 0)      # Gold color for new record
 
 # Font definition for 5x5 characters (reused from connect4.py)
 # This font is designed for a 5x5 pixel area per character.
 FONT_5X5 = {
-    'W': [
-        "10001",
-        "10001",
-        "10101",
-        "01010",
-        "01010"
-    ],
-    'I': [
-        "01110",
-        "00100",
-        "00100",
-        "00100",
-        "01110"
-    ],
-    'N': [
-        "10001",
-        "11001",
-        "10101",
-        "10011",
-        "10001"
-    ],
-    '0': [ "01110", "10010", "10110", "11010", "01110" ],
-    '1': [ "01000", "11000", "01000", "01000", "11100" ],
-    '2': [ "01110", "10010", "01100", "00100", "11110" ],
-    '3': [ "11110", "00010", "01110", "00010", "11110" ],
-    '4': [ "00100", "01100", "10100", "11110", "00100" ],
-    '5': [ "11110", "10000", "11110", "00010", "11110" ],
-    '6': [ "01110", "10000", "11110", "10010", "01110" ],
-    '7': [ "11110", "00010", "00100", "01000", "10000" ],
-    '8': [ "01110", "10010", "01110", "10010", "01110" ],
-    '9': [ "01110", "10010", "01110", "00010", "11110" ],
-    '.': [ "00000", "00000", "00000", "00000", "01000" ], # Small dot for seconds
-    's': [ "01110", "10000", "01110", "00010", "11100" ]
+    'W': ["10001", "10001", "10101", "01010", "01010"], 'I': ["01110", "00100", "00100", "00100", "01110"],
+    'N': ["10001", "11001", "10101", "10011", "10001"], 'E': ["11110", "10000", "11100", "10000", "11110"],
+    'R': ["11100", "10010", "11100", "10100", "10010"], 'C': ["01110", "10000", "10000", "10000", "01110"],
+    'O': ["01110", "10001", "10001", "10001", "01110"], 'D': ["11100", "10010", "10010", "10010", "11100"],
+    'T': ["11111", "00100", "00100", "00100", "00100"], 'M': ["10001", "11011", "10101", "10001", "10001"],
+    'S': ["01110", "10000", "01110", "00001", "11110"],
+    '0': ["01110", "10010", "10110", "11010", "01110"], '1': ["01000", "11000", "01000", "01000", "11100"],
+    '2': ["01110", "10010", "01100", "00100", "11110"], '3': ["11110", "00010", "01110", "00010", "11110"],
+    '4': ["00100", "01100", "10100", "11110", "00100"], '5': ["11110", "10000", "11110", "00010", "11110"],
+    '6': ["01110", "10000", "11110", "10010", "01110"], '7': ["11110", "00010", "00100", "01000", "10000"],
+    '8': ["01110", "10010", "01110", "10010", "01110"], '9': ["01110", "10010", "01110", "00010", "11110"],
+    '.': ["00000", "00000", "00000", "00000", "01000"], ':': ["00000", "01000", "00000", "01000", "00000"],
+    ' ': ["00000", "00000", "00000", "00000", "00000"]
 }
 
 # --- Global Game State Variables ---
-maze = []               # 2D list to store the maze grid (0 for path, 1 for wall)
-player_pos = [0, 0]     # [row, col]
-start_pos = [0, 0]      # [row, col]
-destination_pos = [0, 0] # [row, col]
-game_active = False     # True if game is running, False when won/reset
-start_time = 0.0        # To track game duration
-game_won_time = 0.0     # Stores the time when the game was won
+maze = []                  # 2D list to store the maze grid (0 for path, 1 for wall)
+player_pos = [0, 0]        # [row, col]
+start_pos = [0, 0]         # [row, col]
+destination_pos = [0, 0]   # [row, col]
+game_active = False        # True if game is running, False when won/reset
+start_time = 0.0           # To track game duration
+game_won_time = 0.0        # Stores the time when the game was won
+lowest_time = float('inf') # Stores session's best time
 
 # --- Maze Generation Functions ---
 
@@ -261,24 +243,50 @@ def draw_char(char, start_x, start_y, color):
                     # Assuming display.set_xy takes (row, col)
                     display.set_xy((start_y + r_offset, start_x + c_offset), color)
 
-def draw_text(x_start, y_start, text, color, font=FONT_5X5):
-    """Draws a string of text on the display."""
+def draw_text(x_start, y_start, text, color, spacing=1):
     current_x = x_start
-    char_width = 5 # Each char is 5 pixels wide from FONT_5X5
-    char_spacing = 1 # Space between characters
-
-    for char in text.upper(): # Convert to uppercase to match font keys
-        if char in font:
-            char_pattern = font[char]
+    for char in text.upper():
+        if char in FONT_5X5:
+            char_pattern = FONT_5X5[char]
+            pattern_width = len(char_pattern[0]) if char_pattern else 5
             for r_offset, row_pattern in enumerate(char_pattern):
                 for c_offset, pixel_status in enumerate(row_pattern):
                     if pixel_status == '1':
-                        # display.set_xy takes (y, x)
-                        display.set_xy((y_start + r_offset, current_x + c_offset), color)
-            current_x += char_width + char_spacing # Move to the next character position
+                        final_x, final_y = current_x + c_offset, y_start + r_offset
+                        if is_valid_physical_cell(final_y, final_x):
+                            display.set_xy((final_y, final_x), color)
+            current_x += pattern_width + spacing
         else:
-            current_x += char_width + char_spacing # Still move even if char not found
+             current_x += 3 + spacing
 
+def draw_scrolling_text(y_pos, text, color, scroll_speed=0.05):
+    # 1. Render text to a wide off-screen buffer
+    text = text.upper()
+    est_width = len(text) * 6
+    buffer = [[COLOR_WALL for _ in range(HEIGHT)] for _ in range(est_width)]
+    current_x = 0
+    for char in text:
+        if char in FONT_5X5:
+            pattern = FONT_5X5[char]
+            char_w = len(pattern[0])
+            for r_offset, row_str in enumerate(pattern):
+                for c_offset, pixel in enumerate(row_str):
+                    if pixel == '1' and (current_x + c_offset) < est_width:
+                        buffer[current_x + c_offset][y_pos + r_offset] = color
+            current_x += char_w + 1
+
+    # 2. Animate buffer across the screen
+    for step in range(current_x + WIDTH):
+        display.fill(COLOR_WALL)
+        for screen_x in range(WIDTH):
+            buffer_x = step + screen_x - WIDTH
+            if 0 <= buffer_x < current_x:
+                for screen_y in range(HEIGHT):
+                    pixel = buffer[buffer_x][screen_y]
+                    if pixel != COLOR_WALL:
+                        display.set_xy((screen_y, screen_x), pixel)
+        display.show()
+        time.sleep(scroll_speed)
 
 def draw_maze():
     """Renders the entire maze, player, start, and destination on the LED-Box."""
@@ -389,30 +397,22 @@ def handle_input(key):
             display_win_screen(game_won_time)
 
 def display_win_screen(final_time):
-    """Displays "WIN" and the elapsed time on the LED-Box."""
-    display.fill(COLOR_PATH) # Clear screen
+    global lowest_time
+    is_new_record = final_time < lowest_time
+    if is_new_record:
+        lowest_time = final_time
     
-    # Display "WIN"
-    draw_text(0, 3, "WIN", COLOR_TEXT) # Row 3 is a good vertical center for 5x5 font
-
-    # Display time (e.g., "12.34s")
-    time_str = f"{final_time:.1f}s" # Format to 1 decimal place
-    
-    # Calculate width of the specific time string
-    text_width_pixels = sum(len(FONT_5X5.get(c.upper(), ['00000'])[0]) for c in time_str) + \
-                        (len(time_str) - 1) * 1 # 1 pixel spacing
-    if len(time_str) == 1: text_width_pixels = 5 # Edge case for single digit (e.g., "0s")
-
-    # Center horizontally
-    text_start_x = (WIDTH - text_width_pixels) // 2
-    if text_start_x < 0: text_start_x = 0 # Avoid negative if string too long
-
-    # Display time below "WIN"
-    # "WIN" ends around row 3+5 = 8. So put time at row 9 or 10.
-    draw_text(text_start_x, 9, time_str, COLOR_TEXT)
-
+    # Show static "WIN"
+    display.fill(COLOR_WALL)
+    draw_text((WIDTH - 15) // 2, 6, "WIN", COLOR_TEXT, spacing=0)
     display.show()
-    # Game is inactive, will wait for ENTER to reset in game_loop
+    time.sleep(2)
+
+    # Scroll the result
+    if is_new_record:
+        draw_scrolling_text(6, f"NEW RECORD: {final_time:.2f}S", COLOR_GOLD)
+    else:
+        draw_scrolling_text(6, f"TIME: {final_time:.2f}S", COLOR_TEXT)
 
 # --- Remote Input Setup ---
 
@@ -432,7 +432,6 @@ def setup_remote_bindings():
     # Bind ENTER to reset the game
     remote.bind_key('ENTER', lambda key: handle_input('ENTER'))
     print("[DEBUG] Remote bindings set up.")
-
 
 # --- Main Game Loop ---
 
@@ -483,8 +482,7 @@ if __name__ == "__main__":
             display.pixels = np.zeros((display.height, display.width, 3), dtype=np.uint8)
         except ImportError:
             print("[ERROR] NumPy not found. Emulator display will not work correctly.")
-            print("Please ensure your ulib/display.py (emulator) is correctly configured with numpy.")
+            print("Please ensure your ulib/display_emu.py (emulator) is correctly configured with numpy.")
             display.pixels = [[(0,0,0) for _ in range(display.width)] for _ in range(display.height)]
 
     game_loop()
-
