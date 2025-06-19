@@ -20,32 +20,29 @@ from collections import deque # Needed for the longest path (BFS) algorithm
 WIDTH = 16
 HEIGHT = 16
 
-# Lower values will make all colors dimmer.
-GLOBAL_BRIGHTNESS_FACTOR = 0.5 # Start with 50% brightness for all colors
-
 # Colors (RGB tuples)
-COLOR_WALL = (0, 0, 0)         # Black for maze walls
-COLOR_PATH = (85, 85, 85)      # White for empty path
-COLOR_PLAYER = (0, 85, 0)      # Green for the player dot
-COLOR_START = (0, 0, 85)       # Blue for the starting point
-COLOR_DESTINATION = (85, 0, 0) # Red for the destination point
-COLOR_TEXT = (170, 170, 170)   # White for "WIN" text and time
-COLOR_GOLD = (255, 215, 0)     # Gold color for new record
+COLOR_WALL = (255, 255, 255)    # White for maze walls
+COLOR_PATH = (0, 0, 0)          # Black for empty path
+COLOR_PLAYER = (0, 255, 0)      # Green for the player dot
+COLOR_START = (0, 0, 255)       # Blue for the starting point
+COLOR_DESTINATION = (255, 0, 0) # Red for the destination point
+COLOR_TEXT = (0, 0, 0)    # White for "WIN" text and time
+COLOR_GOLD = (255, 215, 0)      # Gold color for new record
 
 # Font definition for 5x5 characters (reused from connect4.py)
 # This font is designed for a 5x5 pixel area per character.
 FONT_5X5 = {
     'W': ["10001", "10001", "10101", "01010", "01010"], 'I': ["01110", "00100", "00100", "00100", "01110"],
     'N': ["10001", "11001", "10101", "10011", "10001"], 'E': ["11110", "10000", "11100", "10000", "11110"],
-    'R': ["11100", "10010", "11100", "10100", "10010"], 'C': ["01110", "10000", "10000", "10000", "01110"],
+    'R': ["11100", "10100", "11000", "10100", "10010"], 'C': ["01110", "10000", "10000", "10000", "01110"],
     'O': ["01110", "10001", "10001", "10001", "01110"], 'D': ["11100", "10010", "10010", "10010", "11100"],
     'T': ["11111", "00100", "00100", "00100", "00100"], 'M': ["10001", "11011", "10101", "10001", "10001"],
-    'S': ["01110", "10000", "01110", "00001", "11110"],
-    '0': ["01110", "10010", "10110", "11010", "01110"], '1': ["01000", "11000", "01000", "01000", "11100"],
-    '2': ["01110", "10010", "01100", "00100", "11110"], '3': ["11110", "00010", "01110", "00010", "11110"],
-    '4': ["00100", "01100", "10100", "11110", "00100"], '5': ["11110", "10000", "11110", "00010", "11110"],
-    '6': ["01110", "10000", "11110", "10010", "01110"], '7': ["11110", "00010", "00100", "01000", "10000"],
-    '8': ["01110", "10010", "01110", "10010", "01110"], '9': ["01110", "10010", "01110", "00010", "11110"],
+    'S': ["01110", "10000", "01110", "00001", "01110"],
+    '0': ["01110", "10011", "10101", "11001", "01110"], '1': ["01000", "11000", "01000", "01000", "11100"],
+    '2': ["01110", "10010", "01100", "00100", "11110"], '3': ["11110", "00001", "01110", "00001", "11110"],
+    '4': ["00100", "01100", "10100", "11110", "00100"], '5': ["11110", "10000", "11110", "00001", "11110"],
+    '6': ["01110", "10000", "11110", "10010", "01110"], '7': ["11111", "00010", "00100", "00100", "00100"],
+    '8': ["01110", "10001", "01110", "10001", "01110"], '9': ["01110", "10001", "01111", "00001", "01111"],
     '.': ["00000", "00000", "00000", "00000", "01000"], ':': ["00000", "01000", "00000", "01000", "00000"],
     ' ': ["00000", "00000", "00000", "00000", "00000"]
 }
@@ -61,6 +58,17 @@ game_won_time = 0.0        # Stores the time when the game was won
 lowest_time = float('inf') # Stores session's best time
 
 # --- Maze Generation Functions ---
+
+# Coordinate mapping function
+def map_coordinates(x, y):
+    """
+    Maps coordinates to ensure consistency between display and display_emu.
+    Adjusts coordinate order based on the module being used.
+    """
+    if hasattr(display, 'pixels'):  # Check if we're using display_emu
+        return x, y  # Flip the coordinates for display_emu
+    else:
+        return y, x  # No adjustment needed for the real LED box
 
 def create_grid(rows, cols, initial_value):
     """Initializes a 2D grid with a given initial value."""
@@ -99,7 +107,8 @@ def generate_maze_recursive_backtracker():
     stack.append((start_logical_r, start_logical_c))
 
     # Carve out the starting logical cell on the actual display grid
-    maze[start_logical_r * 2 + 1][start_logical_c * 2 + 1] = 0
+    unified_start_y, unified_start_x = map_coordinates(start_logical_r * 2 + 1, start_logical_c * 2 + 1)
+    maze[unified_start_y][unified_start_x] = 0
 
     while stack:
         current_logical_r, current_logical_c = stack[-1] # Peek at the top cell
@@ -126,11 +135,15 @@ def generate_maze_recursive_backtracker():
         if neighbors:
             # Pick a random unvisited neighbor
             (next_logical_r, next_logical_c, dr, dc) = random.choice(neighbors)
+
             # Carve a path to the chosen neighbor cell (physical coord)
-            maze[next_logical_r * 2 + 1][next_logical_c * 2 + 1] = 0
+            unified_next_y, unified_next_x = map_coordinates(next_logical_r * 2 + 1, next_logical_c * 2 + 1)
+            maze[unified_next_y][unified_next_x] = 0
+
             wall_r = current_logical_r * 2 + 1 + dr
             wall_c = current_logical_c * 2 + 1 + dc
-            maze[wall_r][wall_c] = 0
+            unified_wall_y, unified_wall_x = map_coordinates(wall_r, wall_c)
+            maze[unified_wall_y][unified_wall_x] = 0
             
             # Mark the new cell as visited and add to stack
             visited[next_logical_r][next_logical_c] = True
@@ -155,20 +168,22 @@ def find_farthest_path_pixel(start_node):
     while q:
         (r, c), dist = q.popleft()
 
+        unified_r, unified_c = map_coordinates(r, c)
         if dist > max_dist:
             max_dist = dist
-            farthest_node = (r, c)
+            farthest_node = (unified_r, unified_c)
 
         # Check neighbors (up, down, left, right)
         for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
             nr, nc = r + dr, c + dc
 
             # Check if neighbor is a valid path pixel and not visited
-            if (is_valid_physical_cell(nr, nc) and
-                maze[nr][nc] == 0 and
-                (nr, nc) not in visited):
-                visited.add((nr, nc))
-                q.append(((nr, nc), dist + 1))
+            unified_nr, unified_nc = map_coordinates(nr, nc)
+            if (is_valid_physical_cell(unified_nr, unified_nc) and
+                maze[unified_nr][unified_nc] == 0 and
+                (unified_nr, unified_nc) not in visited):
+                visited.add((unified_nr, unified_nc))
+                q.append(((unified_nr, unified_nc), dist + 1))
 
     return farthest_node
 
@@ -177,14 +192,16 @@ def find_dead_ends():
     dead_ends = []
     for r in range(HEIGHT):
         for c in range(WIDTH):
-            if maze[r][c] == 0:
+            unified_r, unified_c = map_coordinates(r, c)
+            if maze[unified_r][unified_c] == 0:
                 neighbors = 0
                 for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
                     nr, nc = r+dr, c+dc
-                    if 0 <= nr < HEIGHT and 0 <= nc < WIDTH and maze[nr][nc] == 0:
+                    unified_nr, unified_nc = map_coordinates(nr, nc)
+                    if 0 <= unified_nr < HEIGHT and 0 <= unified_nc < WIDTH and maze[unified_nr][unified_nc] == 0:
                         neighbors += 1
                 if neighbors == 1:
-                    dead_ends.append((r, c))
+                    dead_ends.append((unified_r, unified_c))
     return dead_ends
 
 def place_start_and_destination():
@@ -212,6 +229,12 @@ def place_start_and_destination():
     start_pos = list(best_pair[0])
     destination_pos = list(best_pair[1])
     player_pos[0], player_pos[1] = start_pos[0], start_pos[1]
+
+    unified_start_y, unified_start_x = map_coordinates(start_pos[0], start_pos[1])
+    unified_dest_y, unified_dest_x = map_coordinates(destination_pos[0], destination_pos[1])
+    display.set_xy((unified_start_y, unified_start_x), COLOR_START)
+    display.set_xy((unified_dest_y, unified_dest_x), COLOR_DESTINATION)
+
     print(f"[DEBUG] Start at dead end: {start_pos}, Destination at dead end: {destination_pos}, Distance: {max_dist}")
 
 def path_distance(a, b):
@@ -222,13 +245,15 @@ def path_distance(a, b):
     visited.add(a)
     while queue:
         (r, c), dist = queue.popleft()
-        if (r, c) == b:
+        unified_r, unified_c = map_coordinates(r, c)
+        if (unified_r, unified_c) == b:
             return dist
         for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
-            nr, nc = r+dr, c+dc
-            if 0 <= nr < HEIGHT and 0 <= nc < WIDTH and maze[nr][nc] == 0 and (nr, nc) not in visited:
-                visited.add((nr, nc))
-                queue.append(((nr, nc), dist+1))
+            nr, nc = r + dr, c + dc
+            unified_nr, unified_nc = map_coordinates(nr, nc)
+            if 0 <= unified_nr < HEIGHT and 0 <= unified_nc < WIDTH and maze[unified_nr][unified_nc] == 0 and (unified_nr, unified_nc) not in visited:
+                visited.add((unified_nr, unified_nc))
+                queue.append(((unified_nr, unified_nc), dist + 1))
     return -1 # Not connected (should not happen in a perfect maze)
 
 # --- Drawing Functions ---
@@ -243,9 +268,10 @@ def draw_char(char, start_x, start_y, color):
         for c_offset, pixel_val in enumerate(row_pattern):
             if pixel_val == '1':
                 # Add boundary check before drawing
-                if 0 <= (start_y + r_offset) < HEIGHT and 0 <= (start_x + c_offset) < WIDTH:
+                unified_y, unified_x = map_coordinates(start_y + r_offset, start_x + c_offset)
+                if 0 <= (unified_y) < HEIGHT and 0 <= (unified_x) < WIDTH:
                     # Assuming display.set_xy takes (row, col)
-                    display.set_xy((start_y + r_offset, start_x + c_offset), color)
+                    display.set_xy((unified_y, unified_x), color)
 
 def draw_text(x_start, y_start, text, color, spacing=1):
     current_x = x_start
@@ -257,8 +283,9 @@ def draw_text(x_start, y_start, text, color, spacing=1):
                 for c_offset, pixel_status in enumerate(row_pattern):
                     if pixel_status == '1':
                         final_x, final_y = current_x + c_offset, y_start + r_offset
-                        if is_valid_physical_cell(final_y, final_x):
-                            display.set_xy((final_y, final_x), color)
+                        unified_y, unified_x = map_coordinates(final_y, final_x)
+                        if is_valid_physical_cell(unified_y, unified_x):
+                            display.set_xy((unified_y, unified_x), color)
             current_x += pattern_width + spacing
         else:
              current_x += 3 + spacing
@@ -267,7 +294,7 @@ def draw_scrolling_text(y_pos, text, color, scroll_speed=0.05):
     # Render text to a wide off-screen buffer
     text = text.upper()
     est_width = len(text) * 6
-    buffer = [[COLOR_WALL for _ in range(HEIGHT)] for _ in range(est_width)]
+    buffer = [[COLOR_PATH for _ in range(HEIGHT)] for _ in range(est_width)]
     current_x = 0
     for char in text:
         if char in FONT_5X5:
@@ -281,16 +308,17 @@ def draw_scrolling_text(y_pos, text, color, scroll_speed=0.05):
 
     # Animate buffer across the screen
     for step in range(current_x + WIDTH):
-        display.fill(COLOR_WALL)
+        display.fill(COLOR_PATH)
         for screen_x in range(WIDTH):
             buffer_x = step + screen_x - WIDTH
             if 0 <= buffer_x < current_x:
                 for screen_y in range(HEIGHT):
                     pixel = buffer[buffer_x][screen_y]
-                    if pixel != COLOR_WALL:
-                        display.set_xy((screen_y, screen_x), pixel)
+                    if pixel != COLOR_PATH:
+                        unified_y, unified_x = map_coordinates(screen_y, screen_x)
+                        display.set_xy((unified_y, unified_x), pixel)
         # Apply fade during scrolling text
-        display.fade((0.6, 0.6, 0.6))  # Example: Dim display during scroll
+        display.fade((0.5, 0.5, 0.5))  # Example: Dim display during scroll
         display.show()
         time.sleep(scroll_speed)
 
@@ -298,17 +326,21 @@ def draw_maze():
     """Renders the entire maze, player, start, and destination on the LED-Box."""
     for r in range(HEIGHT):
         for c in range(WIDTH):
+            unified_y, unified_x = map_coordinates(r, c)
             if maze[r][c] == 1:  # If it's a wall
-                display.set_xy((r, c), COLOR_WALL)
+                display.set_xy((unified_y, unified_x), COLOR_WALL)
             else:  # It's a path
-                display.set_xy((r, c), COLOR_PATH)
+                display.set_xy((unified_y, unified_x), COLOR_PATH)
 
     # Draw start and destination points
-    display.set_xy(tuple(start_pos), COLOR_START)
-    display.set_xy(tuple(destination_pos), COLOR_DESTINATION)
+    start_y, start_x = map_coordinates(start_pos[0], start_pos[1])
+    dest_y, dest_x = map_coordinates(destination_pos[0], destination_pos[1])
+    display.set_xy((start_y, start_x), COLOR_START)
+    display.set_xy((dest_y, dest_x), COLOR_DESTINATION)
 
     # Draw player
-    display.set_xy(tuple(player_pos), COLOR_PLAYER)
+    player_y, player_x = map_coordinates(player_pos[0], player_pos[1])
+    display.set_xy((player_y, player_x), COLOR_PLAYER)
 
     # Apply fade before showing the display
     display.fade((0.5, 0.5, 0.5))  # Example: Dim display by 50%
@@ -369,16 +401,19 @@ def handle_input(key):
             print("[DEBUG] Enter pressed during active game (ignored for movement).")
             return
 
+    unified_new_r, unified_new_c = map_coordinates(new_r, new_c)
+
     # Check for valid move (within bounds and not a wall)
     # The player is allowed to move to the exact start_pos or destination_pos, even if they are on the border.
-    is_move_to_border_entry = (new_r == start_pos[0] and new_c == start_pos[1])
-    is_move_to_border_exit = (new_r == destination_pos[0] and new_c == destination_pos[1])
+    is_move_to_border_entry = (unified_new_r == start_pos[0] and unified_new_c == start_pos[1])
+    is_move_to_border_exit = (unified_new_r == destination_pos[0] and unified_new_c == destination_pos[1])
 
-    if (is_valid_physical_cell(new_r, new_c) and # Check bounds (0 to 15)
-        maze[new_r][new_c] == 0): # Check if it's a path
+
+    if (is_valid_physical_cell(unified_new_r, unified_new_c) and # Check bounds (0 to 15)
+        maze[unified_new_r][unified_new_c] == 0): # Check if it's a path
 
         # Further check: if moving to a border cell (0 or 15), it MUST be the entry/exit point
-        if (new_r == 0 or new_r == HEIGHT - 1 or new_c == 0 or new_c == WIDTH - 1) and \
+        if (unified_new_r == 0 or unified_new_r == HEIGHT - 1 or unified_new_c == 0 or unified_new_c == WIDTH - 1) and \
            not (is_move_to_border_entry or is_move_to_border_exit):
             print(f"[DEBUG] Blocked move to perimeter not at entry/exit: ({new_r}, {new_c}).")
             return # Block if it's a border move but not to entry/exit
@@ -410,19 +445,21 @@ def display_win_screen(final_time):
         lowest_time = final_time
 
     # Show static "WIN"
-    display.fill(COLOR_WALL)
+    display.fill(COLOR_PATH)
     draw_text((WIDTH - 15) // 2, 6, "WIN", COLOR_TEXT, spacing=0)
 
     # Apply fade to dim the display during the win screen
-    display.fade((0.7, 0.7, 0.7))  # Example: Dim display slightly
+    unified_y, unified_x = map_coordinates((WIDTH - 15) // 2, 6)
+    display.set_xy((unified_y, unified_x), COLOR_TEXT)
+    display.fade((0.5, 0.5, 0.5))  # Example: Dim display slightly
     display.show()
     time.sleep(2)
 
     # Scroll the result
     if is_new_record:
-        draw_scrolling_text(6, f"NEW RECORD: {final_time:.2f}S", COLOR_GOLD)
+        draw_scrolling_text(6, f"NEW RECORD: {final_time:.2f} SECONDS", COLOR_GOLD)
     else:
-        draw_scrolling_text(6, f"TIME: {final_time:.2f}S", COLOR_TEXT)
+        draw_scrolling_text(6, f"TIME: {final_time:.2f} SECONDS", COLOR_GOLD)
 
 # --- Remote Input Setup ---
 
