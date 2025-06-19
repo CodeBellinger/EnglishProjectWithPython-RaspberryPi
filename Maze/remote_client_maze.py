@@ -2,11 +2,23 @@
 import socket
 import sys
 import msvcrt # Import this at the top of your file
+import time
+from ulib import display_emu as display  # Replace this with 'from ulib import display' for LEDBox testing
 
 # IP-Adresse deines Raspberry Pis (ersetze DIESE durch die tatsächliche IP!)
 # Du findest die IP-Adresse deines Raspberry Pi, indem du `hostname -I`, 'ipconfig', 'nmap 192.168.1.119' im Terminal eingibst.
-RPI_IP = '127.0.0.1' # Localhost for testing on the same machine
-# RPI_IP = '192.168.1.119' # LEDBox for testing on the Raspberry Pi
+def map_ip_address():
+    """
+    Maps IP addresses to ensure consistency between display and display_emu.
+    Adjusts the IP address based on the module being used.
+    """
+    if 'ulib.display_emu' in sys.modules:  # Check if display_emu is imported
+        return '127.0.0.1'  # Localhost for testing on the same machine
+    else:
+        return '192.168.1.119'  # LEDBox for testing on the Raspberry Pi
+
+# Set the IP address for remote communication
+RPI_IP = map_ip_address()
 PORT = 5000
 
 def send_key(key):

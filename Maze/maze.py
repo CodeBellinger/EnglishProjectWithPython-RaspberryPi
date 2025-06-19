@@ -65,10 +65,10 @@ def map_coordinates(x, y):
     Maps coordinates to ensure consistency between display and display_emu.
     Adjusts coordinate order based on the module being used.
     """
-    if hasattr(display, 'pixels'):  # Check if we're using display_emu
-        return x, y  # Flip the coordinates for display_emu
+    if 'ulib.display_emu' in sys.modules:  # Check if we're using display_emu
+        return x, y  # No adjustment needed for display_emu
     else:
-        return y, x  # No adjustment needed for the real LED box
+        return y, x  # Flip the coordinates for the real LED box/display module
 
 def create_grid(rows, cols, initial_value):
     """Initializes a 2D grid with a given initial value."""
