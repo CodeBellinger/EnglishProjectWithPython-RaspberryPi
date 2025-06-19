@@ -5,8 +5,9 @@
 # "WIN" and the time taken.
 
 # Imports for LED-Box interaction and game logic
-#import ulib: Provides access to display and remote modules
-from ulib import display_emu as display
+# import ulib: Provides access to display and remote modules
+# from ulib import display_emu as display
+from ulib import display
 from ulib import remote
 import time # For timing the game and delays
 import random # For maze generation and random placement
@@ -19,14 +20,17 @@ from collections import deque # Needed for the longest path (BFS) algorithm
 WIDTH = 16
 HEIGHT = 16
 
+# Lower values will make all colors dimmer.
+GLOBAL_BRIGHTNESS_FACTOR = 0.5 # Start with 50% brightness for all colors
+
 # Colors (RGB tuples)
-COLOR_WALL = (0, 0, 0)          # Black for maze walls
-COLOR_PATH = (255, 255, 255)    # White for empty path
-COLOR_PLAYER = (0, 255, 0)      # Green for the player dot
-COLOR_START = (0, 0, 255)       # Blue for the starting point
-COLOR_DESTINATION = (255, 0, 0) # Red for the destination point
-COLOR_TEXT = (255, 255, 255)    # White for "WIN" text and time
-COLOR_GOLD = (255, 215, 0)      # Gold color for new record
+COLOR_WALL = (0, 0, 0)         # Black for maze walls
+COLOR_PATH = (85, 85, 85)      # White for empty path
+COLOR_PLAYER = (0, 85, 0)      # Green for the player dot
+COLOR_START = (0, 0, 85)       # Blue for the starting point
+COLOR_DESTINATION = (85, 0, 0) # Red for the destination point
+COLOR_TEXT = (170, 170, 170)   # White for "WIN" text and time
+COLOR_GOLD = (255, 215, 0)     # Gold color for new record
 
 # Font definition for 5x5 characters (reused from connect4.py)
 # This font is designed for a 5x5 pixel area per character.
@@ -260,7 +264,7 @@ def draw_text(x_start, y_start, text, color, spacing=1):
              current_x += 3 + spacing
 
 def draw_scrolling_text(y_pos, text, color, scroll_speed=0.05):
-    # 1. Render text to a wide off-screen buffer
+    # Render text to a wide off-screen buffer
     text = text.upper()
     est_width = len(text) * 6
     buffer = [[COLOR_WALL for _ in range(HEIGHT)] for _ in range(est_width)]
@@ -275,7 +279,7 @@ def draw_scrolling_text(y_pos, text, color, scroll_speed=0.05):
                         buffer[current_x + c_offset][y_pos + r_offset] = color
             current_x += char_w + 1
 
-    # 2. Animate buffer across the screen
+    # Animate buffer across the screen
     for step in range(current_x + WIDTH):
         display.fill(COLOR_WALL)
         for screen_x in range(WIDTH):
@@ -285,17 +289,18 @@ def draw_scrolling_text(y_pos, text, color, scroll_speed=0.05):
                     pixel = buffer[buffer_x][screen_y]
                     if pixel != COLOR_WALL:
                         display.set_xy((screen_y, screen_x), pixel)
+        # Apply fade during scrolling text
+        display.fade((0.6, 0.6, 0.6))  # Example: Dim display during scroll
         display.show()
         time.sleep(scroll_speed)
 
 def draw_maze():
     """Renders the entire maze, player, start, and destination on the LED-Box."""
-
     for r in range(HEIGHT):
         for c in range(WIDTH):
-            if maze[r][c] == 1: # If it's a wall
+            if maze[r][c] == 1:  # If it's a wall
                 display.set_xy((r, c), COLOR_WALL)
-            else: # It's a path
+            else:  # It's a path
                 display.set_xy((r, c), COLOR_PATH)
 
     # Draw start and destination points
@@ -305,7 +310,9 @@ def draw_maze():
     # Draw player
     display.set_xy(tuple(player_pos), COLOR_PLAYER)
 
-    display.show() # Push changes to the physical display
+    # Apply fade before showing the display
+    display.fade((0.5, 0.5, 0.5))  # Example: Dim display by 50%
+    display.show()  # Push changes to the physical display
 
 # --- Game Logic ---
 
@@ -401,10 +408,13 @@ def display_win_screen(final_time):
     is_new_record = final_time < lowest_time
     if is_new_record:
         lowest_time = final_time
-    
+
     # Show static "WIN"
     display.fill(COLOR_WALL)
     draw_text((WIDTH - 15) // 2, 6, "WIN", COLOR_TEXT, spacing=0)
+
+    # Apply fade to dim the display during the win screen
+    display.fade((0.7, 0.7, 0.7))  # Example: Dim display slightly
     display.show()
     time.sleep(2)
 
