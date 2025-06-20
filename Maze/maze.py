@@ -6,8 +6,8 @@
 
 # Imports for LED-Box interaction and game logic
 # import ulib: Provides access to display and remote modules
-# from ulib import display_emu as display
-from ulib import display
+# from ulib import display
+from ulib import display_emu as display
 from ulib import remote
 import time # For timing the game and delays
 import random # For maze generation and random placement
@@ -346,6 +346,29 @@ def draw_maze():
     display.fade((0.5, 0.5, 0.5))  # Example: Dim display by 50%
     display.show()  # Push changes to the physical display
 
+def display_win_screen(final_time):
+    global lowest_time
+    is_new_record = final_time < lowest_time
+    if is_new_record:
+        lowest_time = final_time
+
+    # Show static "WIN"
+    display.fill(COLOR_PATH)
+    draw_text((WIDTH - 15) // 2, 6, "WIN", COLOR_TEXT, spacing=0)
+
+    # Apply fade to dim the display during the win screen
+    unified_y, unified_x = map_coordinates((WIDTH - 15) // 2, 6)
+    display.set_xy((unified_y, unified_x), COLOR_TEXT)
+    display.fade((0.5, 0.5, 0.5))  # Example: Dim display slightly
+    display.show()
+    time.sleep(2)
+
+    # Scroll the result
+    if is_new_record:
+        draw_scrolling_text(6, f"NEW RECORD: {final_time:.2f} SECONDS", COLOR_GOLD)
+    else:
+        draw_scrolling_text(6, f"TIME: {final_time:.2f} SECONDS", COLOR_GOLD)
+        
 # --- Game Logic ---
 
 def reset_game():
@@ -408,7 +431,6 @@ def handle_input(key):
     is_move_to_border_entry = (unified_new_r == start_pos[0] and unified_new_c == start_pos[1])
     is_move_to_border_exit = (unified_new_r == destination_pos[0] and unified_new_c == destination_pos[1])
 
-
     if (is_valid_physical_cell(unified_new_r, unified_new_c) and # Check bounds (0 to 15)
         maze[unified_new_r][unified_new_c] == 0): # Check if it's a path
 
@@ -438,28 +460,6 @@ def handle_input(key):
             print(f"[DEBUG] Player reached destination! Time: {game_won_time:.2f}s")
             display_win_screen(game_won_time)
 
-def display_win_screen(final_time):
-    global lowest_time
-    is_new_record = final_time < lowest_time
-    if is_new_record:
-        lowest_time = final_time
-
-    # Show static "WIN"
-    display.fill(COLOR_PATH)
-    draw_text((WIDTH - 15) // 2, 6, "WIN", COLOR_TEXT, spacing=0)
-
-    # Apply fade to dim the display during the win screen
-    unified_y, unified_x = map_coordinates((WIDTH - 15) // 2, 6)
-    display.set_xy((unified_y, unified_x), COLOR_TEXT)
-    display.fade((0.5, 0.5, 0.5))  # Example: Dim display slightly
-    display.show()
-    time.sleep(2)
-
-    # Scroll the result
-    if is_new_record:
-        draw_scrolling_text(6, f"NEW RECORD: {final_time:.2f} SECONDS", COLOR_GOLD)
-    else:
-        draw_scrolling_text(6, f"TIME: {final_time:.2f} SECONDS", COLOR_GOLD)
 
 # --- Remote Input Setup ---
 
@@ -487,7 +487,7 @@ def game_loop():
     global game_active
 
     remote.start_listening() # Start listening for remote commands
-    setup_remote_bindings()       # Set up the key bindings
+    setup_remote_bindings()  # Set up the key bindings
 
     print("--- Running Maze Game ---")
     print("Connect to the LED-Box WiFi, access http://led-box.bbrouter/ on your browser.")
