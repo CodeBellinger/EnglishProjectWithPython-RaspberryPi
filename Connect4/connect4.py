@@ -1,59 +1,53 @@
 # from ulib import display_emu as display
-from ulib import display
+from ulib import display_emu as display
 from ulib import remote
 import time
 import random
 import math
 import time
+import sys
 
-# Konstanten
-WIDTH = 16
-HEIGHT = 16 # Display-Höhe
-BOARD_COLS = WIDTH # Spielfeld Spalten
-BOARD_ROWS = HEIGHT # Spielfeld Reihen
+# --- Constants ---
+# LED-Box dimensions
+WIDTH = 16 # board_cols
+HEIGHT = 16 # Display-Höhe, board_rows
 
+# Colors (RGB tuples)
 PLAYER1_COLOR = (255, 0, 0) # Rot
 PLAYER2_COLOR = (0, 0, 255) # Blau
-EMPTY_COLOR = (0, 0, 0)   # Schwarz # Changed from 0 to (0,0,0)
-GRID_COLOR = (50, 50, 50) # Optional: für leere Felder
+EMPTY_COLOR = (0, 0, 0)   # Schwarz 
+GRID_COLOR = (50, 50, 50) # Weiß (Optional: für leere Felder)
 
-# Function to get a lighter version of a player's color for the ghost chip
-def get_ghost_color(player_color, transparency_factor=0.4):
-    """Returns a lighter/more transparent version of a given color."""
-    r, g, b = player_color
-    return (
-        int(r * transparency_factor),
-        int(g * transparency_factor),
-        int(b * transparency_factor)
-    )
-
-# Get the ghost colors once
-PLAYER1_GHOST_COLOR = get_ghost_color(PLAYER1_COLOR)
-PLAYER2_GHOST_COLOR = get_ghost_color(PLAYER2_COLOR)
-
+# Font definition for 5x5 characters
+# This font is designed for a 5x5 pixel area per character.
 FONT_5X5 = {
-    'W': [
-        "10001",
-        "10001",
-        "10101",
-        "01010",
-        "01010"
-    ],
-    'I': [
-        "01110",
-        "00100",
-        "00100",
-        "00100",
-        "01110"
-    ],
-    'N': [
-        "10001",
-        "11001",
-        "10101",
-        "10011",
-        "10001"
-    ],
+    'W': ["10001", "10001", "10101", "01010", "01010"],
+    'I': ["01110", "00100", "00100", "00100", "01110"],
+    'N': ["10001", "11001", "10101", "10011", "10001"],
 }
+
+# --- Global Game State Variables ---
+game_board = [[EMPTY_COLOR for _ in range(WIDTH)] for _ in range(HEIGHT)] # Initialized with EMPTY_COLOR (0,0,0)
+current_player = 1 # 1 or 2
+current_column = WIDTH // 2  # Start in the middle column
+current_row = HEIGHT - 1  # Start at the bottom row
+game_over = False
+winner = None
+animation_active = False # Flag to control animations
+chip_falling = False # Ensure this is defined globally as well
+
+# --- Drawing Functions ---
+
+# Coordinate mapping function
+def map_coordinates(x, y):
+    """
+    Maps coordinates to ensure consistency between display and display_emu.
+    Adjusts coordinate order based on the module being used.
+    """
+    if 'ulib.display_emu' in sys.modules:  # Check if we're using display_emu
+        return x, y  # No adjustment needed for display_emu
+    else:
+        return y, x  # Flip the coordinates for the real LED box/display module
 
 def draw_char(char, start_x, start_y, color):
     """Draws a single character at a given (start_x, start_y) coordinate."""
@@ -65,6 +59,30 @@ def draw_char(char, start_x, start_y, color):
         for c_offset, pixel_val in enumerate(row_pattern):
             if pixel_val == '1':
                 display.set_xy((start_y + c_offset, start_x + r_offset), color)
+
+def draw_board(blink_state = False):
+    global game_over, game_board, current_column, current_player, chip_falling
+
+    # Clear the entire display or fill with background (optional, but good for clean redraws)
+    display.fill(EMPTY_COLOR)  # Now correctly clears with (0,0,0)
+
+    # Draw Ghost Chip (with blinking effect)
+    if not game_over and not chip_falling:  # Only show ghost chip if the game is active
+        landing_row = get_landing_row(current_column)
+        if landing_row != -1:  # If the column is not full
+            # Only show ghost chip if not blinking or in visible state
+            if not blink_state:
+                display.set_xy((landing_row, current_column), pixel_color)
+
+    # Draw Actual Game Chips (game_board now stores colors directly)
+    for r in range(HEIGHT):
+        for c in range(WIDTH):
+            pixel_color = game_board[r][c] # This will be (0,0,0), PLAYER1_COLOR, or PLAYER2_COLOR
+            if pixel_color != EMPTY_COLOR: # Only draw if it's not empty
+                display.set_xy((r, c), pixel_color)
+
+    # Update the physical display
+    display.show()
 
 def animate_winner_text(winner_color, player_number):
     # Text to display
@@ -114,104 +132,6 @@ def animate_winner_text(winner_color, player_number):
 
     # Ensure display is cleared after the animation finishes
     display.fill(EMPTY_COLOR)
-    display.show()
-
-# Spielfeld-Darstellung
-# Global variables for game state (ensure these are correctly defined)
-game_board = [[EMPTY_COLOR for _ in range(BOARD_COLS)] for _ in range(BOARD_ROWS)] # Initialized with EMPTY_COLOR (0,0,0)
-current_player = 1 # 1 or 2
-current_row = BOARD_ROWS - 1  # Start at the bottom row
-current_column = BOARD_COLS // 2  # Start in the middle column
-game_over = False
-winner = None
-animation_active = False # Flag to control animations
-chip_falling = False # Ensure this is defined globally as well
-
-# Helper function to find the next empty row in a column
-def get_landing_row(col):
-    """
-    Finds the last possible row where the chip can land in the given column.
-    If the column is full, returns -1.
-    """
-    for r in range(BOARD_ROWS -1, -1, -1): # Iterate from bottom up
-        if game_board[r][col] == EMPTY_COLOR: # Now comparing with (0,0,0)
-            return r
-    return -1 # Column is full
-
-def draw_board(blink_state = False):
-    global game_over, game_board, current_column, current_player, chip_falling
-
-    # Clear the entire display or fill with background (optional, but good for clean redraws)
-    display.fill(EMPTY_COLOR)  # Now correctly clears with (0,0,0)
-
-    # Draw Ghost Chip (with blinking effect)
-    if not game_over and not chip_falling:  # Only show ghost chip if the game is active
-        landing_row = get_landing_row(current_column)
-        if landing_row != -1:  # If the column is not full
-            # Only show ghost chip if not blinking or in visible state
-            if not blink_state:
-                ghost_color = PLAYER1_GHOST_COLOR if current_player == 1 else PLAYER2_GHOST_COLOR
-                display.set_xy((landing_row, current_column), ghost_color)
-
-    # Draw Actual Game Chips (game_board now stores colors directly)
-    for r in range(BOARD_ROWS):
-        for c in range(BOARD_COLS):
-            pixel_color = game_board[r][c] # This will be (0,0,0), PLAYER1_COLOR, or PLAYER2_COLOR
-            if pixel_color != EMPTY_COLOR: # Only draw if it's not empty
-                display.set_xy((r, c), pixel_color)
-
-    # Update the physical display
-    display.show()
-
-def drop_chip(col, player):
-    global game_over, winner, chip_falling, current_player, game_board
-
-    row = get_landing_row(col)
-    if row == -1:
-        print(f"Column {col} is full!")
-        chip_falling = False  # Reset chip_falling if the column is full
-        return False # Column is full
-    
-    # Determine the color of the chip to drop
-    chip_color = PLAYER1_COLOR if player == 1 else PLAYER2_COLOR
-
-    # Simulate the chip falling
-    for r_anim in range(row + 1):
-        # Store player's color directly in the board during animation
-        game_board[r_anim][col] = chip_color
-        draw_board() # Let draw_board handle color conversion
-        time.sleep(0.5) # Speed of falling animation
-        if r_anim < row: # Clear previous falling chip position
-            game_board[r_anim][col] = EMPTY_COLOR # Now clears with (0,0,0)
-
-    # Place the chip in the final position
-    game_board[row][col] = chip_color
-    chip_falling = False  # Reset chip_falling after the chip has landed
-    draw_board()
-
-    # Check for win or draw
-    if check_win(game_board, player): # check_win now handles color comparison
-        game_over = True
-        winner = player
-        print(f"Player {winner} wins!")
-    elif is_board_full(): # is_board_full now handles color comparison
-        game_over = True
-        winner = None
-        print("It's a draw!")
-    else:
-        # Switch turns
-        current_player = 3 - current_player  # Switch player (1 -> 2, 2 -> 1)
-        print(f"[DEBUG] Turn switched. Current player: {current_player}")
-
-    return True
-
-def draw_board_without_preview():
-    display.fill(EMPTY_COLOR) # Now correctly fills with (0,0,0)
-
-    for r in range(BOARD_ROWS):
-        for c in range(BOARD_COLS):
-            pixel_color = game_board[r][c] # Already the correct color
-            display.set_xy((r, c), pixel_color)
     display.show()
 
 def animate_fireworks(winner_color):
@@ -284,13 +204,86 @@ def animate_fireworks(winner_color):
 
         time.sleep(0.2) # Pause between fireworks bursts
 
+def draw_pixel(x, y, color):
+    # Ensure coordinates are within display boundaries
+    if 0 <= x < display.width and 0 <= y < display.height:
+        display.set_xy((y, x), color)
+
+def draw_text(x_start, y_start, text, color, font=FONT_5X5):
+    current_x = x_start
+    for char in text.upper(): # Convert to uppercase to match font keys
+        if char in font:
+            char_pattern = font[char]
+            for r_offset, row_pattern in enumerate(char_pattern):
+                for c_offset, pixel_status in enumerate(row_pattern):
+                    if pixel_status == '1':
+                        draw_pixel(current_x + c_offset, y_start + r_offset, color)
+        current_x += len(font[char][0]) + 1 # Move to the next character position (5 width + 1 spacing)
+
+def clear_display():
+    display.fill(EMPTY_COLOR)
+
+# --- Connect4 Generation Functions ---
+# Helper function to find the next empty row in a column
+def get_landing_row(col):
+    """
+    Finds the last possible row where the chip can land in the given column.
+    If the column is full, returns -1.
+    """
+    for r in range(HEIGHT -1, -1, -1): # Iterate from bottom up
+        if game_board[r][col] == EMPTY_COLOR: # Now comparing with (0,0,0)
+            return r
+    return -1 # Column is full
+
+def drop_chip(col, player):
+    global game_over, winner, chip_falling, current_player, game_board
+
+    row = get_landing_row(col)
+    if row == -1:
+        print(f"Column {col} is full!")
+        chip_falling = False  # Reset chip_falling if the column is full
+        return False # Column is full
+    
+    # Determine the color of the chip to drop
+    chip_color = PLAYER1_COLOR if player == 1 else PLAYER2_COLOR
+
+    # Simulate the chip falling
+    for r_anim in range(row + 1):
+        # Store player's color directly in the board during animation
+        game_board[r_anim][col] = chip_color
+        draw_board() # Let draw_board handle color conversion
+        time.sleep(0.5) # Speed of falling animation
+        if r_anim < row: # Clear previous falling chip position
+            game_board[r_anim][col] = EMPTY_COLOR # Now clears with (0,0,0)
+
+    # Place the chip in the final position
+    game_board[row][col] = chip_color
+    chip_falling = False  # Reset chip_falling after the chip has landed
+    draw_board()
+
+    # Check for win or draw
+    if check_win(game_board, player): # check_win now handles color comparison
+        game_over = True
+        winner = player
+        print(f"Player {winner} wins!")
+    elif is_board_full(): # is_board_full now handles color comparison
+        game_over = True
+        winner = None
+        print("It's a draw!")
+    else:
+        # Switch turns
+        current_player = 3 - current_player  # Switch player (1 -> 2, 2 -> 1)
+        print(f"[DEBUG] Turn switched. Current player: {current_player}")
+
+    return True
+
 def check_win(game_board, player):
     # Determine the color of the current player
     player_color = PLAYER1_COLOR if player == 1 else PLAYER2_COLOR
 
     # Horizontale Überprüfung
-    for r in range(BOARD_ROWS):
-        for c in range(BOARD_COLS - 3):
+    for r in range(HEIGHT):
+        for c in range(WIDTH - 3):
             if game_board[r][c] == player_color and \
                game_board[r][c+1] == player_color and \
                game_board[r][c+2] == player_color and \
@@ -298,8 +291,8 @@ def check_win(game_board, player):
                 return True
 
     # Vertikale Überprüfung
-    for c in range(BOARD_COLS):
-        for r in range(BOARD_ROWS - 3):
+    for c in range(WIDTH):
+        for r in range(HEIGHT - 3):
             if game_board[r][c] == player_color and \
                game_board[r+1][c] == player_color and \
                game_board[r+2][c] == player_color and \
@@ -307,8 +300,8 @@ def check_win(game_board, player):
                 return True
 
     # Negative Diagonale (von oben links nach unten rechts)
-    for r in range(BOARD_ROWS - 3):
-        for c in range(BOARD_COLS - 3):
+    for r in range(HEIGHT - 3):
+        for c in range(WIDTH - 3):
             if game_board[r][c] == player_color and \
                game_board[r+1][c+1] == player_color and \
                game_board[r+2][c+2] == player_color and \
@@ -316,8 +309,8 @@ def check_win(game_board, player):
                 return True
 
     # Positive Diagonale (von oben rechts nach unten links)
-    for c in range(BOARD_COLS - 3):
-        for r in range(3, BOARD_ROWS):
+    for c in range(WIDTH - 3):
+        for r in range(3, HEIGHT):
             if game_board[r][c] == player_color and \
                game_board[r-1][c+1] == player_color and \
                game_board[r-2][c+2] == player_color and \
@@ -326,11 +319,29 @@ def check_win(game_board, player):
     return False
 
 def is_board_full():
-    for r in range(BOARD_ROWS):
-        for c in range(BOARD_COLS):
+    for r in range(HEIGHT):
+        for c in range(WIDTH):
             if game_board[r][c] == EMPTY_COLOR:  # Check for any empty spot using (0,0,0)
                 return False
     return True
+
+# --- Game Logic ---
+
+def reset_game():
+    global game_board, current_player, game_over, current_column, current_row, winner, chip_falling
+
+    # Initialize empty board with EMPTY_COLOR (now (0,0,0))
+    game_board = [[EMPTY_COLOR for _ in range(WIDTH)] for _ in range(HEIGHT)]
+
+    current_player = 1 # Player 1 starts
+    current_column = WIDTH // 2 # Start in the middle column
+    current_row = HEIGHT - 1 # Bottom row
+    game_over = False
+    winner = None
+    chip_falling = False  # No chip is falling initially
+    setup_remote_bindings() # Call this to set up bindings on game start/reset
+    print("[DEBUG] Game reset. Board cleared. Player 1 turn.")
+    draw_board() # Draw the cleared board after reset
 
 def handle_input(key):
     global current_column, current_row, chip_falling, game_over, current_player, game_board, winner # Keep existing globals
@@ -365,7 +376,7 @@ def handle_input(key):
         print(f"[DEBUG] Player 1 Moved LEFT: current_column from {old_column} to {current_column}")
     elif key == 'RIGHT' and current_player == 1:
         old_column = current_column
-        current_column = min(BOARD_COLS - 1, current_column + 1)
+        current_column = min(WIDTH - 1, current_column + 1)
         print(f"[DEBUG] Player 1 Moved RIGHT: current_column from {old_column} to {current_column}")
     elif key == 'P2_LEFT' and current_player == 2:
         old_column = current_column
@@ -373,7 +384,7 @@ def handle_input(key):
         print(f"[DEBUG] Player 2 Moved LEFT: current_column from {old_column} to {current_column}")
     elif key == 'P2_RIGHT' and current_player == 2:
         old_column = current_column
-        current_column = min(BOARD_COLS - 1, current_column + 1)
+        current_column = min(WIDTH - 1, current_column + 1)
         print(f"[DEBUG] Player 2 Moved RIGHT: current_column from {old_column} to {current_column}")
     elif key in ['ENTER', 'P2_ENTER']:
         print(f"[DEBUG] Player {current_player} Attempting to drop chip in column {current_column}")
@@ -392,50 +403,39 @@ def handle_input(key):
     
     print(f"[DEBUG] After input processing: coordinates = ({current_row},{current_column}), chip_falling = {chip_falling}, game_over = {game_over}, current_player = {current_player}")
 
-# --- Utility Functions for Display ---
-def draw_pixel(x, y, color):
-    # Ensure coordinates are within display boundaries
-    if 0 <= x < display.width and 0 <= y < display.height:
-        display.set_xy((y, x), color)
 
-def draw_text(x_start, y_start, text, color, font=FONT_5X5):
-    current_x = x_start
-    for char in text.upper(): # Convert to uppercase to match font keys
-        if char in font:
-            char_pattern = font[char]
-            for r_offset, row_pattern in enumerate(char_pattern):
-                for c_offset, pixel_status in enumerate(row_pattern):
-                    if pixel_status == '1':
-                        draw_pixel(current_x + c_offset, y_start + r_offset, color)
-        current_x += len(font[char][0]) + 1 # Move to the next character position (5 width + 1 spacing)
+# --- Remote Input Setup ---
 
-def clear_display():
-    display.fill(EMPTY_COLOR)
+def setup_remote_bindings():
+    """Sets up the remote key bindings for player movement."""
+    # Clear existing bindings to prevent duplicates if this is called multiple times
+    remote.bindings = {} # Clear specific key bindings
+    remote.all_binds = [] # Clear all_binds if you use it
 
-def reset_game():
-    global game_board, current_player, game_over, current_column, current_row, winner, chip_falling
+    # Player 1 bindings
+    remote.bind_key('LEFT', lambda key: handle_input('LEFT'))
+    remote.bind_key('RIGHT', lambda key: handle_input('RIGHT'))
+    remote.bind_key('ENTER', lambda key: handle_input('ENTER'))
 
-    # Initialize empty board with EMPTY_COLOR (now (0,0,0))
-    game_board = [[EMPTY_COLOR for _ in range(BOARD_COLS)] for _ in range(BOARD_ROWS)]
+    # Player 2 bindings (using distinct P2_ commands for clarity)
+    remote.bind_key('P2_LEFT', lambda key: handle_input('P2_LEFT'))
+    remote.bind_key('P2_RIGHT', lambda key: handle_input('P2_RIGHT'))
+    remote.bind_key('P2_ENTER', lambda key: handle_input('P2_ENTER'))
+    print("[DEBUG] Remote bindings set up.")
 
-    current_player = 1 # Player 1 starts
-    current_column = BOARD_COLS // 2 # Start in the middle column
-    current_row = BOARD_ROWS - 1 # Bottom row
-    game_over = False
-    winner = None
-    chip_falling = False  # No chip is falling initially
-    setup_remote_bindings() # Call this to set up bindings on game start/reset
-    print("[DEBUG] Game reset. Board cleared. Player 1 turn.")
-    draw_board() # Draw the cleared board after reset
+# --- Main Game Loop ---
 
 def game_loop():
     global current_column, chip_falling, game_over, current_player, game_board, winner
 
     remote.start_listening() # Start the remote listener
+    setup_remote_bindings()  # Set up the key bindings
+
     print("--- Running Connect 4 Game Loop ---")
     print("Use a separate terminal to run remote_client.py and send inputs.")
     print("To stop this game loop, interrupt the kernel (Square Stop button above or Kernel -> Interrupt).")
 
+    # Initial game setup
     reset_game() # Initialize the game state and set up bindings
 
     try:
@@ -479,18 +479,15 @@ def game_loop():
         print("[DEBUG] Game loop ending. Stopping remote listener.")
         remote.stop_listening() # Ensure listener is stopped on exit
 
-# --- New function to set up remote key bindings ---
-def setup_remote_bindings():
-    # Clear existing bindings to prevent duplicates if this is called multiple times
-    remote.bindings = {} # Clear specific key bindings
-    remote.all_binds = [] # Clear all_binds if you use it
+if __name__ == "__main__":
+    if 'display_emu' in sys.modules and not hasattr(display, 'pixels'):
+        print("[DEBUG] Initializing display_emu pixels for notebook environment.")
+        try:
+            import numpy as np # Ensure numpy is imported if display_emu needs it
+            display.pixels = np.zeros((display.height, display.width, 3), dtype=np.uint8)
+        except ImportError:
+            print("[ERROR] NumPy not found. Emulator display will not work correctly.")
+            print("Please ensure your ulib/display_emu.py (emulator) is correctly configured with numpy.")
+            display.pixels = [[(0,0,0) for _ in range(display.width)] for _ in range(display.height)]
 
-    # Player 1 bindings
-    remote.bind_key('LEFT', lambda key: handle_input('LEFT'))
-    remote.bind_key('RIGHT', lambda key: handle_input('RIGHT'))
-    remote.bind_key('ENTER', lambda key: handle_input('ENTER'))
-
-    # Player 2 bindings (using distinct P2_ commands for clarity)
-    remote.bind_key('P2_LEFT', lambda key: handle_input('P2_LEFT'))
-    remote.bind_key('P2_RIGHT', lambda key: handle_input('P2_RIGHT'))
-    remote.bind_key('P2_ENTER', lambda key: handle_input('P2_ENTER'))
+    game_loop()              # Start the game loop
