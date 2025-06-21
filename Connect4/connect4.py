@@ -58,12 +58,14 @@ def draw_char(char, start_x, start_y, color):
     for r_offset, row_pattern in enumerate(char_pixels):
         for c_offset, pixel_val in enumerate(row_pattern):
             if pixel_val == '1':
-                display.set_xy((start_y + c_offset, start_x + r_offset), color)
+                unified_start_y, unified_start_x = map_coordinates(start_y + c_offset, start_x + r_offset)
+                display.set_xy((unified_start_y, unified_start_x), color)
 
 def draw_board(blink_state = False):
     global game_over, game_board, current_column, current_player, chip_falling
 
     # Clear the entire display or fill with background (optional, but good for clean redraws)
+    display.fade((0.5, 0.5, 0.5))
     display.fill(EMPTY_COLOR)  # Now correctly clears with (0,0,0)
 
     # Draw Ghost Chip (with blinking effect)
@@ -72,17 +74,28 @@ def draw_board(blink_state = False):
         if landing_row != -1:  # If the column is not full
             # Only show ghost chip if not blinking or in visible state
             if not blink_state:
-                display.set_xy((landing_row, current_column), pixel_color)
+                unified_landing_row, unified_current_col = map_coordinates(landing_row, current_column)
+                chip_color = PLAYER1_COLOR if current_player == 1 else PLAYER2_COLOR
+                display.set_xy((unified_landing_row, unified_current_col), chip_color)
 
     # Draw Actual Game Chips (game_board now stores colors directly)
     for r in range(HEIGHT):
         for c in range(WIDTH):
             pixel_color = game_board[r][c] # This will be (0,0,0), PLAYER1_COLOR, or PLAYER2_COLOR
             if pixel_color != EMPTY_COLOR: # Only draw if it's not empty
-                display.set_xy((r, c), pixel_color)
+                unified_r, unified_c = map_coordinates(r, c)
+                display.set_xy((unified_r, unified_c), pixel_color)
 
     # Update the physical display
     display.show()
+
+def draw_pixel(x, y, color):
+    # Ensure coordinates are within display boundaries
+    if 0 <= x < display.width and 0 <= y < display.height:
+        unified_y, unified_x = map_coordinates(y,x)
+        display.set_xy((unified_y, unified_x), color)
+
+# --- Winning Animation Functions ---
 
 def animate_winner_text(winner_color, player_number):
     # Text to display
@@ -92,9 +105,7 @@ def animate_winner_text(winner_color, player_number):
     char_width = 5 # Each char is 5 pixels wide
     char_height = 5 # From FONT_5X5
 
-    # Adjust spacing for "WIN" to fit precisely
     # By setting char_spacing to 0, "WIN" will be 3 * 5 = 15 pixels wide.
-    # This will allow it to be centered on a 16-pixel display.
     current_char_spacing = 0 
 
     # Calculate total width of the text with adjusted spacing
@@ -115,26 +126,31 @@ def animate_winner_text(winner_color, player_number):
 
     # Animation loop for blinking text
     for _ in range(5): # Blink 5 times (adjust as desired)
+        display.fade((0.5, 0.5, 0.5))
         display.fill(EMPTY_COLOR) # Clear screen for this frame
         current_x = start_text_x
         # Iterate over characters in the text string
         for char in text:
             if char.upper() in FONT_5X5:
-                draw_char(char.upper(), current_x, start_text_y, winner_color)
+                unified_current_x, unified_start_text_y = map_coordinates(current_x, start_text_y)
+                draw_char(char.upper(), unified_current_x, unified_start_text_y, winner_color)
             current_x += (char_width + current_char_spacing) # Use the adjusted spacing
 
         display.show()
         time.sleep(0.8) # Text visible for 0.8 seconds
 
+        display.fade((0.5, 0.5, 0.5))
         display.fill(EMPTY_COLOR) # Clear screen for blink off
         display.show()
         time.sleep(0.3) # Text off for 0.3 seconds
 
     # Ensure display is cleared after the animation finishes
+    display.fade((0.5, 0.5, 0.5))
     display.fill(EMPTY_COLOR)
     display.show()
 
 def animate_fireworks(winner_color):
+    display.fade((0.5, 0.5, 0.5))
     display.fill(EMPTY_COLOR) # Start with a black screen for fireworks (now (0,0,0))
     display.show()
     time.sleep(0.5)
@@ -148,7 +164,8 @@ def animate_fireworks(winner_color):
         # --- Launch phase ---
         for y in range(start_y, random.randint(3, display.height // 2), -1): # Shoot upwards
             display.fill(EMPTY_COLOR) # Clear previous frame (now (0,0,0))
-            display.set_xy((y, start_x), winner_color)
+            unified_y, unified_start_x = map_coordinates(y, start_x)
+            display.set_xy((unified_y, unified_start_x), winner_color)
             display.show()
             time.sleep(0.05)
 
@@ -174,6 +191,7 @@ def animate_fireworks(winner_color):
             })
 
         for t in range(20): # Number of animation frames for explosion
+            display.fade((0.5, 0.5, 0.5))
             display.fill(EMPTY_COLOR) # Now correctly clears with (0,0,0)
             
             for spark in sparks:
@@ -197,17 +215,13 @@ def animate_fireworks(winner_color):
                         faded_g = int(max(0, min(255, g * fade_factor)))
                         faded_b = int(max(0, min(255, b * fade_factor)))
                         faded_color = (faded_r, faded_g, faded_b)
-                        display.set_xy((draw_y, draw_x), faded_color)
+                        unified_draw_y, unified_draw_x = map_coordinates(draw_y, draw_x)
+                        display.set_xy((unified_draw_y, unified_draw_x), faded_color)
             
             display.show()
             time.sleep(0.05)
 
         time.sleep(0.2) # Pause between fireworks bursts
-
-def draw_pixel(x, y, color):
-    # Ensure coordinates are within display boundaries
-    if 0 <= x < display.width and 0 <= y < display.height:
-        display.set_xy((y, x), color)
 
 def draw_text(x_start, y_start, text, color, font=FONT_5X5):
     current_x = x_start
@@ -217,10 +231,12 @@ def draw_text(x_start, y_start, text, color, font=FONT_5X5):
             for r_offset, row_pattern in enumerate(char_pattern):
                 for c_offset, pixel_status in enumerate(row_pattern):
                     if pixel_status == '1':
-                        draw_pixel(current_x + c_offset, y_start + r_offset, color)
+                        unified_current_x, unified_y_start = map_coordinates(current_x + c_offset, y_start + r_offset)
+                        draw_pixel(unified_current_x, unified_y_start, color)
         current_x += len(font[char][0]) + 1 # Move to the next character position (5 width + 1 spacing)
 
 def clear_display():
+    display.fade((0.5, 0.5, 0.5))
     display.fill(EMPTY_COLOR)
 
 # --- Connect4 Generation Functions ---
@@ -250,11 +266,13 @@ def drop_chip(col, player):
     # Simulate the chip falling
     for r_anim in range(row + 1):
         # Store player's color directly in the board during animation
-        game_board[r_anim][col] = chip_color
+        unified_r_anim, unified_col = map_coordinates(r_anim, col)
+        game_board[unified_r_anim][unified_col] = chip_color
         draw_board() # Let draw_board handle color conversion
-        time.sleep(0.5) # Speed of falling animation
+        time.sleep(0.05) # Speed of falling animation
         if r_anim < row: # Clear previous falling chip position
-            game_board[r_anim][col] = EMPTY_COLOR # Now clears with (0,0,0)
+            unified_r_anim, unified_col = map_coordinates(r_anim, col)
+            game_board[unified_r_anim][unified_col] = EMPTY_COLOR # Now clears with (0,0,0)
 
     # Place the chip in the final position
     game_board[row][col] = chip_color
@@ -284,37 +302,53 @@ def check_win(game_board, player):
     # Horizontale Überprüfung
     for r in range(HEIGHT):
         for c in range(WIDTH - 3):
-            if game_board[r][c] == player_color and \
-               game_board[r][c+1] == player_color and \
-               game_board[r][c+2] == player_color and \
-               game_board[r][c+3] == player_color:
+            unified_r, unified_c = map_coordinates(r, c)
+            unified_r, unified_c2 = map_coordinates(r, c + 1)
+            unified_r, unified_c3 = map_coordinates(r, c + 2)
+            unified_r, unified_c4 = map_coordinates(r, c + 3)
+            if game_board[unified_r][unified_c] == player_color and \
+               game_board[unified_r][unified_c2] == player_color and \
+               game_board[unified_r][unified_c3] == player_color and \
+               game_board[unified_r][unified_c4] == player_color:
                 return True
 
     # Vertikale Überprüfung
     for c in range(WIDTH):
         for r in range(HEIGHT - 3):
-            if game_board[r][c] == player_color and \
-               game_board[r+1][c] == player_color and \
-               game_board[r+2][c] == player_color and \
-               game_board[r+3][c] == player_color:
+            unified_r, unified_c = map_coordinates(r, c)
+            unified_r2, unified_c = map_coordinates(r + 1, c)
+            unified_r3, unified_c = map_coordinates(r + 2, c)
+            unified_r4, unified_c = map_coordinates(r + 3, c)
+            if game_board[unified_r][unified_c] == player_color and \
+               game_board[unified_r2][unified_c] == player_color and \
+               game_board[unified_r3][unified_c] == player_color and \
+               game_board[unified_r4][unified_c] == player_color:
                 return True
 
     # Negative Diagonale (von oben links nach unten rechts)
     for r in range(HEIGHT - 3):
         for c in range(WIDTH - 3):
-            if game_board[r][c] == player_color and \
-               game_board[r+1][c+1] == player_color and \
-               game_board[r+2][c+2] == player_color and \
-               game_board[r+3][c+3] == player_color:
+            unified_r, unified_c = map_coordinates(r, c)
+            unified_r2, unified_c2 = map_coordinates(r + 1, c + 1)
+            unified_r3, unified_c3 = map_coordinates(r + 2, c + 2)
+            unified_r4, unified_c4 = map_coordinates(r + 3, c + 3)
+            if game_board[unified_r][unified_c] == player_color and \
+               game_board[unified_r2][unified_c2] == player_color and \
+               game_board[unified_r3][unified_c3] == player_color and \
+               game_board[unified_r4][unified_c4] == player_color:
                 return True
 
     # Positive Diagonale (von oben rechts nach unten links)
     for c in range(WIDTH - 3):
         for r in range(3, HEIGHT):
-            if game_board[r][c] == player_color and \
-               game_board[r-1][c+1] == player_color and \
-               game_board[r-2][c+2] == player_color and \
-               game_board[r-3][c+3] == player_color:
+            unified_r, unified_c = map_coordinates(r, c)
+            unified_r5, unified_c2 = map_coordinates(r - 1, c + 1)
+            unified_r6, unified_c3 = map_coordinates(r - 2, c + 2)
+            unified_r7, unified_c4 = map_coordinates(r - 3, c + 3)
+            if game_board[unified_r][unified_c] == player_color and \
+               game_board[unified_r5][unified_c2] == player_color and \
+               game_board[unified_r6][unified_c3] == player_color and \
+               game_board[unified_r7][unified_c4] == player_color:
                 return True
     return False
 
@@ -328,17 +362,9 @@ def is_board_full():
 # --- Game Logic ---
 
 def reset_game():
+    """Resets the game state, draws a new board, and displays a player's chip."""
     global game_board, current_player, game_over, current_column, current_row, winner, chip_falling
 
-    # Initialize empty board with EMPTY_COLOR (now (0,0,0))
-    game_board = [[EMPTY_COLOR for _ in range(WIDTH)] for _ in range(HEIGHT)]
-
-    current_player = 1 # Player 1 starts
-    current_column = WIDTH // 2 # Start in the middle column
-    current_row = HEIGHT - 1 # Bottom row
-    game_over = False
-    winner = None
-    chip_falling = False  # No chip is falling initially
     setup_remote_bindings() # Call this to set up bindings on game start/reset
     print("[DEBUG] Game reset. Board cleared. Player 1 turn.")
     draw_board() # Draw the cleared board after reset
@@ -426,6 +452,7 @@ def setup_remote_bindings():
 # --- Main Game Loop ---
 
 def game_loop():
+    """Main loop for the maze game."""
     global current_column, chip_falling, game_over, current_player, game_board, winner
 
     remote.start_listening() # Start the remote listener
@@ -490,4 +517,4 @@ if __name__ == "__main__":
             print("Please ensure your ulib/display_emu.py (emulator) is correctly configured with numpy.")
             display.pixels = [[(0,0,0) for _ in range(display.width)] for _ in range(display.height)]
 
-    game_loop()              # Start the game loop
+    game_loop() # Start the game loop
