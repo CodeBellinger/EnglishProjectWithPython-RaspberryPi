@@ -388,19 +388,22 @@ def reset_game():
     game_won_time = 0.0 # Reset won time
 
     display.fill(COLOR_PATH) # Clear display before drawing new maze
+    display.fade((0.5, 0.5, 0.5))
     display.show()
     time.sleep(0.1) # Small delay for clear
     
     # 4. Draw the initial state
     draw_maze()
     print(f"[DEBUG] Game reset. Start: {start_pos}, Destination: {destination_pos}")
-
+    
 def handle_input(key):
     """
     Handles player movement based on remote key presses.
     Checks for walls before moving the player.
     """
     global player_pos, game_active, start_time, game_won_time
+
+    print(f"[DEBUG] Received key: {key}")
 
     if not game_active and key not in ['ENTER']: # Allow ENTER to reset even if not active
         return # Ignore input if game is over and not a reset command
