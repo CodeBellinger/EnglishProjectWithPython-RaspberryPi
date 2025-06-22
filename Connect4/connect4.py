@@ -87,6 +87,7 @@ def draw_board(blink_state = False):
                 display.set_xy((unified_r, unified_c), pixel_color)
 
     # Update the physical display
+    display.fade((0.5, 0.5, 0.5))
     display.show()
 
 def draw_pixel(x, y, color):
@@ -126,32 +127,43 @@ def animate_winner_text(winner_color, player_number):
 
     # Animation loop for blinking text
     for _ in range(5): # Blink 5 times (adjust as desired)
-        display.fade((0.5, 0.5, 0.5))
         display.fill(EMPTY_COLOR) # Clear screen for this frame
         current_x = start_text_x
         # Iterate over characters in the text string
         for char in text:
             if char.upper() in FONT_5X5:
-                unified_current_x, unified_start_text_y = map_coordinates(current_x, start_text_y)
-                draw_char(char.upper(), unified_current_x, unified_start_text_y, winner_color)
-            current_x += (char_width + current_char_spacing) # Use the adjusted spacing
+                # Draw each character row by row
+                char_pixels = FONT_5X5[char.upper()]
+                for r_offset, row_pattern in enumerate(char_pixels):
+                    for c_offset, pixel_val in enumerate(row_pattern):
+                        if pixel_val == '1':
+                            # Calculate the correct display coordinates
+                            unified_x, unified_y = map_coordinates(current_x + c_offset, start_text_y + r_offset)
+                            display.set_xy((unified_y, unified_x), winner_color)  # Correctly mapped coordinates
+            current_x += (char_width + current_char_spacing)  # Move to the next character position
 
+        display.fade((0.5, 0.5, 0.5))
         display.show()
         time.sleep(0.8) # Text visible for 0.8 seconds
 
-        display.fade((0.5, 0.5, 0.5))
         display.fill(EMPTY_COLOR) # Clear screen for blink off
+        display.fade((0.5, 0.5, 0.5))
         display.show()
         time.sleep(0.3) # Text off for 0.3 seconds
 
     # Ensure display is cleared after the animation finishes
-    display.fade((0.5, 0.5, 0.5))
     display.fill(EMPTY_COLOR)
+    display.fade((0.5, 0.5, 0.5))
     display.show()
 
 def animate_fireworks(winner_color):
-    display.fade((0.5, 0.5, 0.5))
+    global animation_active
+    
+    # Set animation active flag
+    animation_active = True
+
     display.fill(EMPTY_COLOR) # Start with a black screen for fireworks (now (0,0,0))
+    display.fade((0.5, 0.5, 0.5))
     display.show()
     time.sleep(0.5)
 
@@ -191,7 +203,6 @@ def animate_fireworks(winner_color):
             })
 
         for t in range(20): # Number of animation frames for explosion
-            display.fade((0.5, 0.5, 0.5))
             display.fill(EMPTY_COLOR) # Now correctly clears with (0,0,0)
             
             for spark in sparks:
@@ -217,11 +228,14 @@ def animate_fireworks(winner_color):
                         faded_color = (faded_r, faded_g, faded_b)
                         unified_draw_y, unified_draw_x = map_coordinates(draw_y, draw_x)
                         display.set_xy((unified_draw_y, unified_draw_x), faded_color)
-            
+            display.fade((0.5, 0.5, 0.5))
             display.show()
             time.sleep(0.05)
 
         time.sleep(0.2) # Pause between fireworks bursts
+
+    # Reset animation active flag
+    animation_active = False
 
 def draw_text(x_start, y_start, text, color, font=FONT_5X5):
     current_x = x_start
@@ -236,7 +250,6 @@ def draw_text(x_start, y_start, text, color, font=FONT_5X5):
         current_x += len(font[char][0]) + 1 # Move to the next character position (5 width + 1 spacing)
 
 def clear_display():
-    display.fade((0.5, 0.5, 0.5))
     display.fill(EMPTY_COLOR)
 
 # --- Connect4 Generation Functions ---
@@ -380,6 +393,9 @@ def handle_input(key):
     if game_over:
         if key in ['ENTER', 'P2_ENTER']: # Allow both players to reset
             print("[DEBUG] Game was over, reset initiated.") # Debug print
+            if animation_active:
+                print("[DEBUG] Animation is active, waiting for it to finish.")
+                return  # Do not reset while animation is active
             reset_game()
         return
     
@@ -468,7 +484,7 @@ def game_loop():
     try:
         blink_state = False # State for blinking ghost chip
         blink_timer = 0 # For controlling blink speed
-        blink_interval = 10 # Adjust as needed (higher = slower blinking)
+        blink_interval = 5 # Adjust as needed (higher = slower blinking)
 
         while True:
             # Toggle blink state based on timer
