@@ -376,14 +376,25 @@ def is_board_full():
 
 def reset_game():
     """Resets the game state, draws a new board, and displays a player's chip."""
-    global game_board, current_player, game_over, current_column, current_row, winner, chip_falling
+    global game_board, current_player, game_over, current_column, current_row, winner, chip_falling, animation_active, animations_completed
+
+    # Reset all necessary flags
+    game_board = [[EMPTY_COLOR for _ in range(WIDTH)] for _ in range(HEIGHT)]
+    current_player = 1
+    current_column = WIDTH // 2
+    current_row = HEIGHT - 1
+    game_over = False
+    winner = None
+    chip_falling = False
+    animation_active = False
+    animations_completed = False  # Reset animations completed flag
 
     setup_remote_bindings() # Call this to set up bindings on game start/reset
     print("[DEBUG] Game reset. Board cleared. Player 1 turn.")
     draw_board() # Draw the cleared board after reset
 
 def handle_input(key):
-    global current_column, current_row, chip_falling, game_over, current_player, game_board, winner # Keep existing globals
+    global current_column, current_row, chip_falling, game_over, current_player, game_board, winner, animation_active # Keep existing globals
 
     # --- DEBUGGING ---
     print(f"[DEBUG] handle_input called with key: '{key}'")
@@ -469,7 +480,7 @@ def setup_remote_bindings():
 
 def game_loop():
     """Main loop for the maze game."""
-    global current_column, chip_falling, game_over, current_player, game_board, winner
+    global current_column, chip_falling, game_over, current_player, game_board, winner, animation_active
 
     remote.start_listening() # Start the remote listener
     setup_remote_bindings()  # Set up the key bindings
@@ -480,6 +491,9 @@ def game_loop():
 
     # Initial game setup
     reset_game() # Initialize the game state and set up bindings
+
+    # Add a flag to track if animations have completed
+    animations_completed = False
 
     try:
         blink_state = False # State for blinking ghost chip
@@ -500,7 +514,7 @@ def game_loop():
             time.sleep(0.05)
             
             # Handle game_over states
-            if game_over:
+            if game_over and not animations_completed:
                 # Add logic for game over animations, showing winner etc.
                 if winner:
                     winner_color = PLAYER1_COLOR if winner == 1 else PLAYER2_COLOR
@@ -509,6 +523,9 @@ def game_loop():
                     animate_winner_text(winner_color, winner)
                 else:
                     print("--- Game Over! It's a draw! ---")
+                
+                # Mark animations as completed
+                animations_completed = True
 
                 # Keep drawing the final board until reset
                 draw_board(False) # Redraw final state without blinking
@@ -516,6 +533,11 @@ def game_loop():
                 # The handle_input for 'ENTER' (or 'P2_ENTER') when game_over is True will trigger reset_game
                 continue # Continue loop to wait for reset input (from handle_input)
                 
+            # If animations are completed, wait for reset
+            if animations_completed and game_over:
+                time.sleep(0.5)  # Avoid busy looping
+                continue
+
     except KeyboardInterrupt:
         print("\n--- Game loop interrupted by user. ---")
     finally:
