@@ -65,7 +65,6 @@ def draw_board(blink_state = False):
     global game_over, game_board, current_column, current_player, chip_falling
 
     # Clear the entire display or fill with background (optional, but good for clean redraws)
-    display.fade((0.5, 0.5, 0.5))
     display.fill(EMPTY_COLOR)  # Now correctly clears with (0,0,0)
 
     # Draw Ghost Chip (with blinking effect)
@@ -86,9 +85,8 @@ def draw_board(blink_state = False):
                 unified_r, unified_c = map_coordinates(r, c)
                 display.set_xy((unified_r, unified_c), pixel_color)
 
-    # Update the physical display
-    display.fade((0.5, 0.5, 0.5))
-    display.show()
+    # Update the physical display with dim
+    display.fade(0.5, 0.5, 0.5)
 
 def draw_pixel(x, y, color):
     # Ensure coordinates are within display boundaries
@@ -142,19 +140,14 @@ def animate_winner_text(winner_color, player_number):
                             display.set_xy((unified_y, unified_x), winner_color)  # Correctly mapped coordinates
             current_x += (char_width + current_char_spacing)  # Move to the next character position
 
-        display.fade((0.5, 0.5, 0.5))
-        display.show()
+        display.fade(0.5, 0.5, 0.5)
         time.sleep(0.8) # Text visible for 0.8 seconds
 
         display.fill(EMPTY_COLOR) # Clear screen for blink off
-        display.fade((0.5, 0.5, 0.5))
-        display.show()
         time.sleep(0.3) # Text off for 0.3 seconds
 
     # Ensure display is cleared after the animation finishes
     display.fill(EMPTY_COLOR)
-    display.fade((0.5, 0.5, 0.5))
-    display.show()
 
 def animate_fireworks(winner_color):
     global animation_active
@@ -163,8 +156,6 @@ def animate_fireworks(winner_color):
     animation_active = True
 
     display.fill(EMPTY_COLOR) # Start with a black screen for fireworks (now (0,0,0))
-    display.fade((0.5, 0.5, 0.5))
-    display.show()
     time.sleep(0.5)
 
     num_fireworks = 3 # Number of firework bursts
@@ -178,7 +169,7 @@ def animate_fireworks(winner_color):
             display.fill(EMPTY_COLOR) # Clear previous frame (now (0,0,0))
             unified_y, unified_start_x = map_coordinates(y, start_x)
             display.set_xy((unified_y, unified_start_x), winner_color)
-            display.show()
+            display.fade(0.5, 0.5, 0.5)
             time.sleep(0.05)
 
         # --- Explosion phase ---
@@ -228,8 +219,7 @@ def animate_fireworks(winner_color):
                         faded_color = (faded_r, faded_g, faded_b)
                         unified_draw_y, unified_draw_x = map_coordinates(draw_y, draw_x)
                         display.set_xy((unified_draw_y, unified_draw_x), faded_color)
-            display.fade((0.5, 0.5, 0.5))
-            display.show()
+            display.fade(0.5, 0.5, 0.5)
             time.sleep(0.05)
 
         time.sleep(0.2) # Pause between fireworks bursts

@@ -299,7 +299,6 @@ def draw_scrolling_text(y_pos, text, color, scroll_speed=0.05):
 
     # Animate buffer across the screen
     for step in range(current_x + WIDTH):
-        display.fade((0.5, 0.5, 0.5))
         display.fill(COLOR_PATH)
         for screen_x in range(WIDTH):
             buffer_x = step + screen_x - WIDTH
@@ -310,8 +309,7 @@ def draw_scrolling_text(y_pos, text, color, scroll_speed=0.05):
                         unified_y, unified_x = map_coordinates(screen_y, screen_x)
                         display.set_xy((unified_y, unified_x), pixel)
         # Apply fade during scrolling text
-        display.fade((0.5, 0.5, 0.5))  # Example: Dim display during scroll
-        display.show()
+        display.fade(0.5, 0.5, 0.5)  # Example: Dim display during scroll
         time.sleep(scroll_speed)
 
 def draw_maze():
@@ -335,8 +333,7 @@ def draw_maze():
     display.set_xy((player_y, player_x), COLOR_PLAYER)
 
     # Apply fade before showing the display
-    display.fade((0.5, 0.5, 0.5))  # Example: Dim display by 50%
-    display.show()  # Push changes to the physical display
+    display.fade(0.5, 0.5, 0.5)  # Push changes to the physical display while dimming display by 50%
 
 def display_win_screen(final_time):
     global lowest_time
@@ -345,15 +342,13 @@ def display_win_screen(final_time):
         lowest_time = final_time
 
     # Show static "WIN"
-    display.fade((0.5, 0.5, 0.5))
     display.fill(COLOR_PATH)
     draw_text((WIDTH - 15) // 2, 6, "WIN", COLOR_TEXT, spacing=0)
 
     # Apply fade to dim the display during the win screen
     unified_y, unified_x = map_coordinates((WIDTH - 15) // 2, 6)
     display.set_xy((unified_y, unified_x), COLOR_TEXT)
-    display.fade((0.5, 0.5, 0.5))  # Example: Dim display slightly
-    display.show()
+    display.fade(0.5, 0.5, 0.5)  # Example: Dim display slightly
     time.sleep(2)
 
     # Scroll the result
@@ -380,10 +375,7 @@ def reset_game():
     start_time = 0.0 # Reset start time
     game_won_time = 0.0 # Reset won time
 
-    display.fade((0.5, 0.5, 0.5))
     display.fill(COLOR_PATH) # Clear display before drawing new maze
-    display.fade((0.5, 0.5, 0.5))
-    display.show()
     time.sleep(0.1) # Small delay for clear
     
     # 4. Draw the initial state
