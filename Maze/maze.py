@@ -6,8 +6,8 @@
 
 # Imports for LED-Box interaction and game logic
 # import ulib: Provides access to display and remote modules
-# from ulib import display
-from ulib import display_emu as display
+from ulib import display
+#from ulib import display_emu as display
 from ulib import remote
 import time # For timing the game and delays
 import random # For maze generation and random placement
@@ -66,9 +66,9 @@ def map_coordinates(x, y):
     Adjusts coordinate order based on the module being used.
     """
     if 'ulib.display_emu' in sys.modules:  # Check if we're using display_emu
-        return x, y  # No adjustment needed for display_emu
+        return x, y  # Flip the coordinates for emulator
     else:
-        return y, x  # Flip the coordinates for the real LED box/display module
+        return y, x  # No adjustment needed for real LEDBox
 
 def create_grid(rows, cols, initial_value):
     """Initializes a 2D grid with a given initial value."""
@@ -106,9 +106,8 @@ def generate_maze_recursive_backtracker():
     visited[start_logical_r][start_logical_c] = True
     stack.append((start_logical_r, start_logical_c))
 
-    # Carve out the starting logical cell on the actual display grid
-    unified_start_y, unified_start_x = map_coordinates(start_logical_r * 2 + 1, start_logical_c * 2 + 1)
-    maze[unified_start_y][unified_start_x] = 0
+    # Carve out the starting logical cell
+    maze[start_logical_r * 2 + 1][start_logical_c * 2 + 1] = 0
 
     while stack:
         current_logical_r, current_logical_c = stack[-1] # Peek at the top cell
@@ -137,13 +136,11 @@ def generate_maze_recursive_backtracker():
             (next_logical_r, next_logical_c, dr, dc) = random.choice(neighbors)
 
             # Carve a path to the chosen neighbor cell (physical coord)
-            unified_next_y, unified_next_x = map_coordinates(next_logical_r * 2 + 1, next_logical_c * 2 + 1)
-            maze[unified_next_y][unified_next_x] = 0
+            maze[next_logical_r * 2 + 1][next_logical_c * 2 + 1] = 0
 
             wall_r = current_logical_r * 2 + 1 + dr
             wall_c = current_logical_c * 2 + 1 + dc
-            unified_wall_y, unified_wall_x = map_coordinates(wall_r, wall_c)
-            maze[unified_wall_y][unified_wall_x] = 0
+            maze[wall_r][wall_c] = 0
             
             # Mark the new cell as visited and add to stack
             visited[next_logical_r][next_logical_c] = True
@@ -168,22 +165,20 @@ def find_farthest_path_pixel(start_node):
     while q:
         (r, c), dist = q.popleft()
 
-        unified_r, unified_c = map_coordinates(r, c)
         if dist > max_dist:
             max_dist = dist
-            farthest_node = (unified_r, unified_c)
+            farthest_node = (r, c)
 
         # Check neighbors (up, down, left, right)
         for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
             nr, nc = r + dr, c + dc
 
             # Check if neighbor is a valid path pixel and not visited
-            unified_nr, unified_nc = map_coordinates(nr, nc)
-            if (is_valid_physical_cell(unified_nr, unified_nc) and
-                maze[unified_nr][unified_nc] == 0 and
-                (unified_nr, unified_nc) not in visited):
-                visited.add((unified_nr, unified_nc))
-                q.append(((unified_nr, unified_nc), dist + 1))
+            if (is_valid_physical_cell(nr, nc) and
+                maze[nr][nc] == 0 and
+                (nr, nc) not in visited):
+                visited.add((nr, nc))
+                q.append(((nr, nc), dist + 1))
 
     return farthest_node
 
@@ -192,16 +187,14 @@ def find_dead_ends():
     dead_ends = []
     for r in range(HEIGHT):
         for c in range(WIDTH):
-            unified_r, unified_c = map_coordinates(r, c)
-            if maze[unified_r][unified_c] == 0:
+            if maze[r][c] == 0:
                 neighbors = 0
                 for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
                     nr, nc = r+dr, c+dc
-                    unified_nr, unified_nc = map_coordinates(nr, nc)
-                    if 0 <= unified_nr < HEIGHT and 0 <= unified_nc < WIDTH and maze[unified_nr][unified_nc] == 0:
+                    if 0 <= nr < HEIGHT and 0 <= nc < WIDTH and maze[nr][nc] == 0:
                         neighbors += 1
                 if neighbors == 1:
-                    dead_ends.append((unified_r, unified_c))
+                    dead_ends.append((r, c))
     return dead_ends
 
 def place_start_and_destination():
@@ -245,15 +238,13 @@ def path_distance(a, b):
     visited.add(a)
     while queue:
         (r, c), dist = queue.popleft()
-        unified_r, unified_c = map_coordinates(r, c)
-        if (unified_r, unified_c) == b:
+        if (r, c) == b:
             return dist
         for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
             nr, nc = r + dr, c + dc
-            unified_nr, unified_nc = map_coordinates(nr, nc)
-            if 0 <= unified_nr < HEIGHT and 0 <= unified_nc < WIDTH and maze[unified_nr][unified_nc] == 0 and (unified_nr, unified_nc) not in visited:
-                visited.add((unified_nr, unified_nc))
-                queue.append(((unified_nr, unified_nc), dist + 1))
+            if 0 <= nr < HEIGHT and 0 <= nc < WIDTH and maze[nr][nc] == 0 and (nr, nc) not in visited:
+                visited.add((nr, nc))
+                queue.append(((nr, nc), dist + 1))
     return -1 # Not connected (should not happen in a perfect maze)
 
 # --- Drawing Functions ---
@@ -269,7 +260,7 @@ def draw_char(char, start_x, start_y, color):
             if pixel_val == '1':
                 # Add boundary check before drawing
                 unified_y, unified_x = map_coordinates(start_y + r_offset, start_x + c_offset)
-                if 0 <= (unified_y) < HEIGHT and 0 <= (unified_x) < WIDTH:
+                if 0 <= (start_y + r_offset) < HEIGHT and 0 <= (start_y + r_offset) < WIDTH:
                     # Assuming display.set_xy takes (row, col)
                     display.set_xy((unified_y, unified_x), color)
 
@@ -284,7 +275,7 @@ def draw_text(x_start, y_start, text, color, spacing=1):
                     if pixel_status == '1':
                         final_x, final_y = current_x + c_offset, y_start + r_offset
                         unified_y, unified_x = map_coordinates(final_y, final_x)
-                        if is_valid_physical_cell(unified_y, unified_x):
+                        if is_valid_physical_cell(final_y, final_x):
                             display.set_xy((unified_y, unified_x), color)
             current_x += pattern_width + spacing
         else:
@@ -308,6 +299,7 @@ def draw_scrolling_text(y_pos, text, color, scroll_speed=0.05):
 
     # Animate buffer across the screen
     for step in range(current_x + WIDTH):
+        display.fade((0.5, 0.5, 0.5))
         display.fill(COLOR_PATH)
         for screen_x in range(WIDTH):
             buffer_x = step + screen_x - WIDTH
@@ -326,11 +318,11 @@ def draw_maze():
     """Renders the entire maze, player, start, and destination on the LED-Box."""
     for r in range(HEIGHT):
         for c in range(WIDTH):
-            unified_y, unified_x = map_coordinates(r, c)
+            unified_r, unified_c = map_coordinates(r, c)
             if maze[r][c] == 1:  # If it's a wall
-                display.set_xy((unified_y, unified_x), COLOR_WALL)
+                display.set_xy((unified_r, unified_c), COLOR_WALL)
             else:  # It's a path
-                display.set_xy((unified_y, unified_x), COLOR_PATH)
+                display.set_xy((unified_r, unified_c), COLOR_PATH)
 
     # Draw start and destination points
     start_y, start_x = map_coordinates(start_pos[0], start_pos[1])
@@ -353,6 +345,7 @@ def display_win_screen(final_time):
         lowest_time = final_time
 
     # Show static "WIN"
+    display.fade((0.5, 0.5, 0.5))
     display.fill(COLOR_PATH)
     draw_text((WIDTH - 15) // 2, 6, "WIN", COLOR_TEXT, spacing=0)
 
@@ -387,6 +380,7 @@ def reset_game():
     start_time = 0.0 # Reset start time
     game_won_time = 0.0 # Reset won time
 
+    display.fade((0.5, 0.5, 0.5))
     display.fill(COLOR_PATH) # Clear display before drawing new maze
     display.fade((0.5, 0.5, 0.5))
     display.show()
@@ -427,18 +421,16 @@ def handle_input(key):
             print("[DEBUG] Enter pressed during active game (ignored for movement).")
             return
 
-    unified_new_r, unified_new_c = map_coordinates(new_r, new_c)
-
     # Check for valid move (within bounds and not a wall)
     # The player is allowed to move to the exact start_pos or destination_pos, even if they are on the border.
-    is_move_to_border_entry = (unified_new_r == start_pos[0] and unified_new_c == start_pos[1])
-    is_move_to_border_exit = (unified_new_r == destination_pos[0] and unified_new_c == destination_pos[1])
+    is_move_to_border_entry = (new_r == start_pos[0] and new_c == start_pos[1])
+    is_move_to_border_exit = (new_r == destination_pos[0] and new_c == destination_pos[1])
 
-    if (is_valid_physical_cell(unified_new_r, unified_new_c) and # Check bounds (0 to 15)
-        maze[unified_new_r][unified_new_c] == 0): # Check if it's a path
+    if (is_valid_physical_cell(new_r, new_c) and # Check bounds (0 to 15)
+        maze[new_r][new_c] == 0): # Check if it's a path
 
         # Further check: if moving to a border cell (0 or 15), it MUST be the entry/exit point
-        if (unified_new_r == 0 or unified_new_r == HEIGHT - 1 or unified_new_c == 0 or unified_new_c == WIDTH - 1) and \
+        if (new_r == 0 or new_r == HEIGHT - 1 or new_c == 0 or new_c == WIDTH - 1) and \
            not (is_move_to_border_entry or is_move_to_border_exit):
             print(f"[DEBUG] Blocked move to perimeter not at entry/exit: ({new_r}, {new_c}).")
             return # Block if it's a border move but not to entry/exit

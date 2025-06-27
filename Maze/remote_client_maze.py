@@ -18,7 +18,9 @@ import time
 #        return '192.168.1.119'  # LEDBox for testing on the Raspberry Pi
 
 # Set the IP address for remote communication
-RPI_IP = '127.0.0.1'
+
+#RPI_IP = '127.0.0.1'
+RPI_IP = '192.168.1.119'
 #RPI_IP = map_ip_address()
 PORT = 5000
 

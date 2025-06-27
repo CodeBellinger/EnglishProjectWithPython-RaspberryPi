@@ -1,5 +1,5 @@
 # from ulib import display_emu as display
-from ulib import display_emu as display
+from ulib import display
 from ulib import remote
 import time
 import random
@@ -278,14 +278,10 @@ def drop_chip(col, player):
 
     # Simulate the chip falling
     for r_anim in range(row + 1):
-        # Store player's color directly in the board during animation
-        unified_r_anim, unified_col = map_coordinates(r_anim, col)
-        game_board[unified_r_anim][unified_col] = chip_color
         draw_board() # Let draw_board handle color conversion
+        unified_r_anim, unified_col = map_coordinates(r_anim, col)
+        display.set_xy((unified_r_anim, unified_col), chip_color)
         time.sleep(0.05) # Speed of falling animation
-        if r_anim < row: # Clear previous falling chip position
-            unified_r_anim, unified_col = map_coordinates(r_anim, col)
-            game_board[unified_r_anim][unified_col] = EMPTY_COLOR # Now clears with (0,0,0)
 
     # Place the chip in the final position
     game_board[row][col] = chip_color
