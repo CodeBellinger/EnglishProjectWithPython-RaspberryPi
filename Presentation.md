@@ -6,28 +6,31 @@ language: en
 comment:  A student project report and presentation about programming classic games (Maze, Connect4) in Python, reflecting on challenges, learning, and fun insights.
 -->
 
-# Blabla
+# Presentation
 
 [![LiaScript](https://raw.githubusercontent.com/LiaScript/LiaScript/master/badges/course.svg)](https://liascript.github.io/course/?https://github.com/CodeBellinger/ProjectForEnglishClass/blob/main/Presentation.md)
 
 ---
 
-## 1. Attention grabber
+## 1. Attention Please
 
-> "Have you ever wondered why a simple game like Connect4 or Maze can make even experienced programmers scratch their heads?"
+> "Have you ever wondered why simple games like PacMan, Tic-Tac-Toe, Connect4 or Maze can make even experienced programmers scratch their heads? Now imagine this with inexperienced programmers"
+
+![LED GIF](https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDlha216NGNweWM1YTBrOGl4cXNzMmJiMmRpNTlnaW54cW14aDJveiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/YcXkgqd7wfSrbc82Ya/giphy.gif)
 
 ---
 
-## 2. What will audience get out of watching/listening to you? Why should they?
+## 2. Why should you listen to us?
 
 - Real stories from our experience building classic games in Python.
 - Practical lessons learned from bugs, design choices, and unexpected twists.
 - How to turn simple ideas into working code—and keep going when things break.
 - Useful programming strategies that apply to any project, not just games.
+- The cautionary tale of using LLM's/AI without oversight
 
 ---
 
-## 3. What is the scope of your presentation?
+## 3. Scope of presentation
 
 - We present the core journey: from idea to playable Maze and Connect4.
 - Focus on the real coding, problem-solving, and debugging process.
@@ -36,10 +39,9 @@ comment:  A student project report and presentation about programming classic ga
 
 ---
 
-## 4. What was your inspiration? What were your initial ideas? Was there anything you tried but abandoned?
+## 4. Inspiration, ideas
 
-- We chose Maze and Connect4 because they're classic, fun, and deceptively tricky to implement.
-- Initial plan: make the basic game logic work, then add features like remote input and nicer visuals.
+- Why maze, connect4, tic-tac-toe, PacMan
 - Tried and abandoned:
   - Overly complex input methods.
   - Fancy AI (we realized a solid player-vs-player was challenging enough!).
@@ -48,10 +50,10 @@ comment:  A student project report and presentation about programming classic ga
 
 ---
 
-## 5. What background information, theory or technical details do your audience need to know to be able to understand your show/game?
+## 5. Background Information
 
 - **Maze**: Guide a player through a grid avoiding walls to reach the goal.
-- **Connect4**: Two players drop pieces into a 7x6 board, aiming for four in a row (horizontal, vertical, diagonal).
+- **Connect4**: Two players drop pieces into a board, aiming for four in a row (horizontal, vertical, diagonal).
 - Both games:
   - Use grid logic and turn-based mechanics.
   - Require robust handling of user input and clear win/draw detection.

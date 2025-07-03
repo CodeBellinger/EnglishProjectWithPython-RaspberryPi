@@ -287,7 +287,11 @@ def drop_chip(col, player):
         draw_board() # Let draw_board handle color conversion
         unified_r_anim, unified_col = map_coordinates(r_anim, col)
         display.set_xy((unified_r_anim, unified_col), chip_color)
-        time.sleep(0.05) # Speed of falling animation
+        # Force display update for hardware and emulator
+        if hasattr(display, 'show'):
+            display.show()
+        # For some emulators, .fill() or .set_xy() auto-updates, but .show() is robust
+        time.sleep(0.1) # Speed of falling animation
 
     # Place the chip in the final position
     game_board[row][col] = chip_color
@@ -513,7 +517,7 @@ def game_loop():
                 draw_board(blink_state) # Pass the blinking_state here!
 
             # For smoother blinking, use a shorter sleep time
-            time.sleep(0.05)
+            time.sleep(0.1)
             
             # Handle game_over states
             if game_over and not animations_completed:
