@@ -119,9 +119,157 @@ if player_pos == destination_pos:
 - **Connect4 win-detection:**
 
 ```python
-def check_win(board, player):
-    # Check horizontal, vertical, and diagonal for a win
-    ...
+def generate_maze_recursive_backtracker():
+    """
+    Generates a maze using the Recursive Backtracker algorithm.
+    The maze is represented by a grid of 0s (paths) and 1s (walls).
+    Initializes a grid twice the size for walls, then carves paths.
+    """
+    global maze
+
+    # Initialize the entire physical maze grid to all walls (1)
+    maze = create_grid(HEIGHT, WIDTH, 1)
+
+    # Grid for maze generation logic (e.g., 8x8 cells for a 16x16 display)
+    logical_rows = (HEIGHT - 1) // 2
+    logical_cols = (WIDTH - 1) // 2
+
+    # Visited grid for the logical cells
+    visited = create_grid(logical_rows, logical_cols, False)
+    # Stack for DFS (Depth-First Search)
+    stack = []
+
+    # Choose a random starting cell for maze generation
+    start_logical_r = random.randrange(logical_rows)
+    start_logical_c = random.randrange(logical_cols)
+
+    # Mark the starting logical cell as visited
+    visited[start_logical_r][start_logical_c] = True
+    stack.append((start_logical_r, start_logical_c))
+
+    # Carve out the starting logical cell
+    maze[start_logical_r * 2 + 1][start_logical_c * 2 + 1] = 0
+
+    while stack:
+        current_logical_r, current_logical_c = stack[-1] # Peek at the top cell
+
+        # Define possible neighbors and the wall positions between them
+        neighbors = []
+        # Define logical moves (dr, dc) for neighbor
+        possible_moves = [
+            (-1, 0), # Up
+            (1, 0),  # Down
+            (0, -1), # Left
+            (0, 1)  # Right
+        ]
+
+        # Find unvisited neighbors
+        for dr, dc in possible_moves:
+            next_logical_r, next_logical_c = current_logical_r + dr, current_logical_c + dc
+            # Ensure wall is actually a wall before carving
+            if (is_valid(next_logical_r, next_logical_c, logical_rows, logical_cols) and
+               not visited[next_logical_r][next_logical_c]):
+                # Store logical next and original dr,dc
+                neighbors.append((next_logical_r, next_logical_c, dr, dc))
+
+        if neighbors:
+            # Pick a random unvisited neighbor
+            (next_logical_r, next_logical_c, dr, dc) = random.choice(neighbors)
+
+            # Carve a path to the chosen neighbor cell (physical coord)
+            maze[next_logical_r * 2 + 1][next_logical_c * 2 + 1] = 0
+
+            wall_r = current_logical_r * 2 + 1 + dr
+            wall_c = current_logical_c * 2 + 1 + dc
+            maze[wall_r][wall_c] = 0
+            
+            # Mark the new cell as visited and add to stack
+            visited[next_logical_r][next_logical_c] = True
+            stack.append((next_logical_r, next_logical_c))
+        else:
+            # No unvisited neighbors, backtrack
+            stack.pop()
+```
+
+```python
+def check_win(game_board, player):
+    # Determine the color of the current player
+    player_color = PLAYER1_COLOR if player == 1 else PLAYER2_COLOR
+
+    # Horizontale Überprüfung
+    for r in range(HEIGHT):
+        for c in range(WIDTH - 3):
+            unified_r, unified_c = map_coordinates(r, c)
+            unified_r, unified_c2 = map_coordinates(r, c + 1)
+            unified_r, unified_c3 = map_coordinates(r, c + 2)
+            unified_r, unified_c4 = map_coordinates(r, c + 3)
+            if game_board[unified_r][unified_c] == player_color and \
+               game_board[unified_r][unified_c2] == player_color and \
+               game_board[unified_r][unified_c3] == player_color and \
+               game_board[unified_r][unified_c4] == player_color:
+                return True
+
+    # Vertikale Überprüfung
+    for c in range(WIDTH):
+        for r in range(HEIGHT - 3):
+            unified_r, unified_c = map_coordinates(r, c)
+            unified_r2, unified_c = map_coordinates(r + 1, c)
+            unified_r3, unified_c = map_coordinates(r + 2, c)
+            unified_r4, unified_c = map_coordinates(r + 3, c)
+            if game_board[unified_r][unified_c] == player_color and \
+               game_board[unified_r2][unified_c] == player_color and \
+               game_board[unified_r3][unified_c] == player_color and \
+               game_board[unified_r4][unified_c] == player_color:
+                return True
+
+    # Negative Diagonale (von oben links nach unten rechts)
+    for r in range(HEIGHT - 3):
+        for c in range(WIDTH - 3):
+            unified_r, unified_c = map_coordinates(r, c)
+            unified_r2, unified_c2 = map_coordinates(r + 1, c + 1)
+            unified_r3, unified_c3 = map_coordinates(r + 2, c + 2)
+            unified_r4, unified_c4 = map_coordinates(r + 3, c + 3)
+            if game_board[unified_r][unified_c] == player_color and \
+               game_board[unified_r2][unified_c2] == player_color and \
+               game_board[unified_r3][unified_c3] == player_color and \
+               game_board[unified_r4][unified_c4] == player_color:
+                return True
+
+    # Positive Diagonale (von oben rechts nach unten links)
+    for c in range(WIDTH - 3):
+        for r in range(3, HEIGHT):
+            unified_r, unified_c = map_coordinates(r, c)
+            unified_r5, unified_c2 = map_coordinates(r - 1, c + 1)
+            unified_r6, unified_c3 = map_coordinates(r - 2, c + 2)
+            unified_r7, unified_c4 = map_coordinates(r - 3, c + 3)
+            if game_board[unified_r][unified_c] == player_color and \
+               game_board[unified_r5][unified_c2] == player_color and \
+               game_board[unified_r6][unified_c3] == player_color and \
+               game_board[unified_r7][unified_c4] == player_color:
+                return True
+    return False
+```
+
+```python
+def handle_input(self, key: str):
+        if not self.is_running:
+            self.start_game()
+            return
+
+        if key in [Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT]:
+            self.input_controller.move_cursor(key)
+            self.field.draw_board_state(self.input_controller.get_cursor_position())
+
+        elif key == Direction.CONFIRM:
+            player = self.get_current_player()
+            if self.input_controller.confirm_selection(self.field, player):
+                if self.rules.check_win(self.field, player):
+                    self.end_game(winner=player)
+                elif self.rules.check_draw(self.field):
+                    self.end_game(winner=None)
+                else:
+                    self.next_turn()
+                    self.field.draw_board_state(self.input_controller.get_cursor_position())
 ```
 
 ---
