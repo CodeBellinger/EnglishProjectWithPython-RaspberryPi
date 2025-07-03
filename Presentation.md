@@ -1,30 +1,14 @@
 <!--
 author:   Trung Hieu Nguyen, Jannik Gabriel, Josef Binye
 email:    your@mail.org
-version:  0.0.1
+version:  0.0.2
 language: en
 comment:  A student project report and presentation about programming classic games (Maze, Connect4) in Python, reflecting on challenges, learning, and fun insights.
 -->
-# Presentation
 
-[![LiaScript](https://raw.githubusercontent.com/LiaScript/LiaScript/master/badges/course.svg)](https://liascript.github.io/course/?https://github.com/TUBAF-IUZ-LiaScript/STEM-English-1/blob/main/presentation_template.md)
+# Blabla
 
-1. Attention grabber
-2. What will audience get out of watching/listening to you? Why should they?
-3. What is the scope of your presentation (how much are you loading on to the audience)?
-4. What was your inspiration? What were your initial ideas? Was there anything you tried but abandoned?
-5. What background information, theory or technical details do your audience need to know to be able to understand your show/game?
-6. Code (Product)
-  - Big picture
-  - Important code snippets
-  - Bug examples
-  - What did you already know (and from where do you know it) and what did you have to learn to complete the project?
-7. Code (process)
-  - How did you code? Vibe? GitHub?
-8. The show/game. Demo and description
-9. Conclusion
-10. Reflection. What did we get from taking part in this challenge?
-11. Final thought/take-home message
+[![LiaScript](https://raw.githubusercontent.com/LiaScript/LiaScript/master/badges/course.svg)](https://liascript.github.io/course/?https://github.com/CodeBellinger/ProjectForEnglishClass/blob/main/Presentation.md)
 
 ---
 
@@ -36,52 +20,136 @@ comment:  A student project report and presentation about programming classic ga
 
 ## 2. What will audience get out of watching/listening to you? Why should they?
 
-- Insights into the reality of building classic games from scratch
-- Lessons learned from real bugs and mistakes
-- Fun facts about game logic, Python coding, and how small details can turn into big challenges
-- A relatable journey through coding, debugging, and celebrating small victories
+- Real stories from our experience building classic games in Python.
+- Practical lessons learned from bugs, design choices, and unexpected twists.
+- How to turn simple ideas into working code—and keep going when things break.
+- Useful programming strategies that apply to any project, not just games.
 
 ---
 
-## 3. What is the scope of your presentation (how much are you loading on to the audience)?
+## 3. What is the scope of your presentation?
 
-- Brief introduction to the projects (Maze & Connect4 in Python)
-- Key coding challenges and solutions
-- Demo/highlight of the games
-- Reflections and takeaways
-- All in about 15 minutes!
+- We present the core journey: from idea to playable Maze and Connect4.
+- Focus on the real coding, problem-solving, and debugging process.
+- We don't cover advanced AI or graphics—just the most valuable, transferable lessons.
+- The aim: give you practical takeaways for your own programming projects!
 
 ---
 
 ## 4. What was your inspiration? What were your initial ideas? Was there anything you tried but abandoned?
 
-- Inspired by childhood games and the challenge of recreating them in code
-- Initial idea: make a simple, playable version—ended up adding features and facing unexpected bugs
-- Tried various input methods (keyboard, remote client) and display modes (including emulators)
-- Some ideas (like advanced AI or fancy graphics) were set aside to focus on core gameplay and stability
+- We chose Maze and Connect4 because they're classic, fun, and deceptively tricky to implement.
+- Initial plan: make the basic game logic work, then add features like remote input and nicer visuals.
+- Tried and abandoned:
+  - Overly complex input methods.
+  - Fancy AI (we realized a solid player-vs-player was challenging enough!).
+  - Some display features that broke compatibility.
+- The main insight: Simpler is often better—and finishing a game is harder than it looks!
 
 ---
 
 ## 5. What background information, theory or technical details do your audience need to know to be able to understand your show/game?
 
-- **Maze**: A grid where the player moves from start to finish, avoiding walls
-- **Connect4**: Players alternate dropping pieces into a 7x6 board, trying to get four in a row
-- Basic Python programming: using loops, conditionals, and lists
-- Challenge of handling user input, grid-based logic, and visual feedback
+- **Maze**: Guide a player through a grid avoiding walls to reach the goal.
+- **Connect4**: Two players drop pieces into a 7x6 board, aiming for four in a row (horizontal, vertical, diagonal).
+- Both games:
+  - Use grid logic and turn-based mechanics.
+  - Require robust handling of user input and clear win/draw detection.
+- You'll see Python concepts like loops, lists, and function calls in action.
 
 ---
 
 ## 6. Code (Product)
 
-### Big picture
+## Big picture
 
-- Each game is structured around a main loop: input, update, draw
-- Maze: tracks player position, checks collisions, redraws after every move
-- Connect4: manages board state, checks for wins/draws after each turn
+- Both games center around a main loop: get input → update state → draw board.
+- **Maze**: Tracks player position, checks for collisions, redraws after each move.
+- **Connect4**: Manages board state, alternates players, checks for wins or draws.
 
-### Important code snippets
+---
+
+## Important code snippets
 
 - **Maze win-check:**
-  ```python
-  if player_pos == destination_pos:
-      print("You win!")
+
+    ```python
+    if player_pos == destination_pos:
+        print("You win!")
+    ```
+
+- **Connect4 win-detection:**
+
+    ```python
+    def check_win(board, player):
+        # Check horizontal, vertical, and diagonal for a win
+        ...
+    ```
+
+---
+
+## Bug examples
+
+- Off-by-one errors: sometimes the player "disappeared" at the edge of the grid!
+- Remote input and keyboard sometimes desynchronized, causing missed moves.
+- Display incompatibilities: `display.fade()` needed a compatibility wrapper for different environments.
+- Mapping coordinates between display and emulator required a conversion layer (like `map_coordinates()`).
+
+---
+
+## What did you already know, and what did you have to learn?
+
+- Knew: Basic Python, game rules, simple data structures.
+- Learned:
+  - How to handle tricky input and grid logic.
+  - Debugging strategies for hard-to-find bugs.
+  - Writing modular, reusable code (especially for display compatibility).
+  - The importance of clear commit messages and version control!
+
+---
+
+## 7. Code (process)
+
+- We worked iteratively: get a basic version running, then add enhancements.
+- Used GitHub for version control: each commit documented bugs, features, and fixes.
+- Our process:
+    1. Plan the next feature or fix.
+    2. Implement in small steps.
+    3. Test and debug—sometimes for hours!
+    4. Commit and repeat.
+- Collaboration meant learning from each other's mistakes (and solutions).
+
+---
+
+## 8. The show/game. Demo and description
+
+- **Maze**: Move the player with arrow keys or remote input, avoid obstacles, and reach the target.
+- **Connect4**: Take turns dropping pieces, trying to outsmart your opponent (or yourself).
+- The demo highlights:
+  - Real-time board updates.
+  - Clear win/loss messages.
+  - How the code responds to user actions and edge cases.
+
+---
+
+## 9. Conclusion
+
+- Building "simple" games is surprisingly complex—but also really rewarding.
+- The biggest lessons come from debugging and fixing persistent issues.
+- Success is not just having a working game, but understanding how and why it works.
+
+---
+
+## 10. Reflection. What did we get from taking part in this challenge?
+
+- Stronger Python coding skills and confidence in tackling new problems.
+- A better sense of how to break big problems into manageable pieces.
+- The satisfaction of turning an idea into a playable reality—and sharing it with others.
+
+---
+
+## 11. Final thought/take-home message
+
+> "Programming is like solving a puzzle: sometimes you get stuck, but every piece you place brings you closer to the big picture. Keep going, and celebrate every win—even the small ones!"
+
+---
