@@ -65,6 +65,8 @@ comment:  A student project report and presentation about programming classic ga
 
 ## Big picture
 
+![UML Diagram](https://github.com/CodeBellinger/EnglishProjectWithPython-RaspberryPi/blob/main/TicTacToe/UML-Diagram%20f%C3%BCr%20TicTacToe.jpg)
+
 - Both games center around a main loop: get input → update state → draw board.
 - **Maze**: Tracks player position, checks for collisions, redraws after each move.
 - **Connect4**: Manages board state, alternates players, checks for wins or draws.
@@ -138,15 +140,16 @@ comment:  A student project report and presentation about programming classic ga
 
 - Building "simple" games is surprisingly complex—but also really rewarding.
 - The biggest lessons come from debugging and fixing persistent issues.
-- Success is not just having a working game, but understanding how and why it works.
+- Success is not just having a working game, but understanding how and why it works. End result not as important as process
 
 ---
 
-## 10. Reflection. What did we get from taking part in this challenge?
+## 10. Reflection
 
 - Stronger Python coding skills and confidence in tackling new problems.
 - A better sense of how to break big problems into manageable pieces.
 - The satisfaction of turning an idea into a playable reality—and sharing it with others.
+
 
 ---
 
