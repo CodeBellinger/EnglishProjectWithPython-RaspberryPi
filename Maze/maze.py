@@ -243,6 +243,9 @@ def place_start_and_destination():
     unified_dest_y, unified_dest_x = map_coordinates(destination_pos[0], destination_pos[1])
     display.set_xy((unified_start_y, unified_start_x), COLOR_START)
     display.set_xy((unified_dest_y, unified_dest_x), COLOR_DESTINATION)
+    # Ensure the display is updated after drawing the character
+    if hasattr(display, "show"):
+        display.show()
 
     print(f"[DEBUG] Start at dead end: {start_pos}, Destination at dead end: {destination_pos}, Distance: {max_dist}")
 
@@ -279,6 +282,9 @@ def draw_char(char, start_x, start_y, color):
                 if 0 <= (start_y + r_offset) < HEIGHT and 0 <= (start_y + r_offset) < WIDTH:
                     # Assuming display.set_xy takes (row, col)
                     display.set_xy((unified_y, unified_x), color)
+    # Ensure the display is updated after drawing the character
+    if hasattr(display, "show"):
+        display.show()
 
 def draw_text(x_start, y_start, text, color, spacing=1):
     current_x = x_start
@@ -296,6 +302,9 @@ def draw_text(x_start, y_start, text, color, spacing=1):
             current_x += pattern_width + spacing
         else:
              current_x += 3 + spacing
+    # Ensure the display is updated after drawing the character
+    if hasattr(display, "show"):
+        display.show()
 
 def draw_scrolling_text(y_pos, text, color, scroll_speed=0.05):
     # Render text to a wide off-screen buffer
