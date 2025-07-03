@@ -129,10 +129,8 @@ comment:  A student project report and presentation about programming classic ga
 
 - **Maze**: Move the player with arrow keys or remote input, avoid obstacles, and reach the target.
 - **Connect4**: Take turns dropping pieces, trying to outsmart your opponent (or yourself).
-- The demo highlights:
-  - Real-time board updates.
-  - Clear win/loss messages.
-  - How the code responds to user actions and edge cases.
+- **TicTacToe**:
+- **PacMan**:
 
 ---
 
@@ -149,7 +147,6 @@ comment:  A student project report and presentation about programming classic ga
 - Stronger Python coding skills and confidence in tackling new problems.
 - A better sense of how to break big problems into manageable pieces.
 - The satisfaction of turning an idea into a playable reality—and sharing it with others.
-
 
 ---
 
