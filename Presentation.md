@@ -8,6 +8,8 @@ comment:  A student project report and presentation about programming classic ga
 
 # Presentation
 
+![LED GIF](Multimedia/Vibe-Coding.gif)
+
 [![LiaScript](https://raw.githubusercontent.com/LiaScript/LiaScript/master/badges/course.svg)](https://liascript.github.io/course/?https://github.com/CodeBellinger/ProjectForEnglishClass/blob/main/Presentation.md)
 
 ---
@@ -50,7 +52,7 @@ comment:  A student project report and presentation about programming classic ga
 
 ---
 
-## 5. Background Information
+## 5. Historic Facts
 
 - **Maze**: Guide a player through a grid avoiding walls to reach the goal.
 - **Connect4**: Two players drop pieces into a board, aiming for four in a row (horizontal, vertical, diagonal).
@@ -58,6 +60,11 @@ comment:  A student project report and presentation about programming classic ga
   - Use grid logic and turn-based mechanics.
   - Require robust handling of user input and clear win/draw detection.
 - You'll see Python concepts like loops, lists, and function calls in action.
+- **TicTacToe**:
+  - *Roman Empire:* The earliest ancestor was called "Terni Lapilli."
+  - *19th Century:* The modern name "Tic-Tac-Toe" appeared.
+  - *1952:* "OXO" became one of the first-ever graphical computer games.
+
 
 ---
 
