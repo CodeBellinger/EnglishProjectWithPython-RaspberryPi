@@ -128,6 +128,8 @@ def check_win(board, player):
 
 ## Bug examples
 
+![Debugging](Multimedia/Debugging.jpeg)
+
 - Off-by-one errors: sometimes the player "disappeared" at the edge of the grid!
 - Remote input and keyboard sometimes desynchronized, causing missed moves.
 - Display incompatibilities: `display.fade()` needed a compatibility wrapper for different environments.
@@ -147,6 +149,7 @@ def check_win(board, player):
   - The importance of clear commit messages and version control!
   - Everything in python is basically an object
   - Some things are more difficult than it seems
+  - Understanding the concept before writing code
 
 ---
 
@@ -182,6 +185,8 @@ def check_win(board, player):
 
 ## 10. Reflection
 
+![Relationship between AI vs. You](Multimedia/AIvsYou.gif)
+
 - Stronger Python coding skills and confidence in tackling new problems.
 - A better sense of how to break big problems into manageable pieces.
 - The satisfaction of turning an idea into a playable reality—and sharing it with others.
@@ -193,12 +198,14 @@ def check_win(board, player):
 
 ## 11. Final thought/take-home message
 
-![Relationship between AI vs. You](Multimedia/AIvsYou.gif)
+![Summit](https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExejE2cjRhNG5zMWNjZXJtd2ppNWJta3Ntanl4YjJ3bzJtdndwd2NncSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/QXqf43mbeBbYFTy4jR/giphy.gif)
+
 > "Programming is like solving a puzzle: sometimes you get stuck, but every piece you place brings you closer to the big picture. Keep going, and celebrate every win—even the small ones!"
 
 - Never use LLM's/AI without oversight
 - Always use version control
 - Debugging is very important
 - Be patient: The code will not work on the first try (except when you are a genius)
+- Always read the docs
 
 ---
