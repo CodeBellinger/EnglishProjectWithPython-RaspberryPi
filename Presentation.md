@@ -6,16 +6,16 @@ language: en
 comment:  A student project report and presentation about programming classic games (Maze, Connect4) in Python, reflecting on challenges, learning, and fun insights.
 -->
 
-# Blabla
+# Presentation
 
 [![LiaScript](https://raw.githubusercontent.com/LiaScript/LiaScript/master/badges/course.svg)](https://liascript.github.io/course/?https://github.com/CodeBellinger/ProjectForEnglishClass/blob/main/Presentation.md)
 
 ---
 
-## 1. Attention grabber
+## 1. Attention Please
+> "Have you ever wondered why a simple game like PacMan, Tic-Tac-Toe, Connect4 or Maze can make even experienced programmers scratch their heads?"
 
-> "Have you ever wondered why a simple game like Connect4 or Maze can make even experienced programmers scratch their heads?"
-
+![LED GIF](https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDlha216NGNweWM1YTBrOGl4cXNzMmJiMmRpNTlnaW54cW14aDJveiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/YcXkgqd7wfSrbc82Ya/giphy.gif)
 ---
 
 ## 2. What will audience get out of watching/listening to you? Why should they?
