@@ -8,7 +8,7 @@ comment:  A student project report and presentation about programming classic ga
 
 # Presentation
 
-![LED GIF](Multimedia/Vibe-Coding.gif)
+![Monkey](https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExb28wd3RldmI1cm02ZTBicnVjYWlrY2RibHl2OGp5ZDdpMnVqa2hxMyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/zOvBKUUEERdNm/giphy.gif)
 
 [![LiaScript](https://raw.githubusercontent.com/LiaScript/LiaScript/master/badges/course.svg)](https://liascript.github.io/course/?https://github.com/CodeBellinger/ProjectForEnglishClass/blob/main/Presentation.md)
 
@@ -18,11 +18,13 @@ comment:  A student project report and presentation about programming classic ga
 
 > "Have you ever wondered why simple games like PacMan, Tic-Tac-Toe, Connect4 or Maze can make even experienced programmers scratch their heads? Now imagine this with inexperienced programmers"
 
-![LED GIF](https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDlha216NGNweWM1YTBrOGl4cXNzMmJiMmRpNTlnaW54cW14aDJveiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/YcXkgqd7wfSrbc82Ya/giphy.gif)
+![LED GIF](https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExNGE4OGk5b2l2YjhqamRjOTh1aGJnYWc0ZWd1NjYzNnphcWtyYTFoayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/JIX9t2j0ZTN9S/giphy.gif)
 
 ---
 
 ## 2. Why should you listen to us?
+
+![LED GIF](https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDlha216NGNweWM1YTBrOGl4cXNzMmJiMmRpNTlnaW54cW14aDJveiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/YcXkgqd7wfSrbc82Ya/giphy.gif)
 
 - Real stories from our experience building classic games in Python.
 - Practical lessons learned from bugs, design choices, and unexpected twists.
@@ -34,7 +36,7 @@ comment:  A student project report and presentation about programming classic ga
 
 ## 3. Scope of presentation
 
-- We present the core journey: from idea to playable Maze and Connect4.
+- We present the core journey
 - Focus on the real coding, problem-solving, and debugging process.
 - We don't cover advanced AI or graphics—just the most valuable, transferable lessons.
 - The aim: give you practical takeaways for your own programming projects!
@@ -43,8 +45,10 @@ comment:  A student project report and presentation about programming classic ga
 
 ## 4. Inspiration, ideas
 
-- Why maze, connect4, tic-tac-toe, PacMan
+- Everybody knows how to play retro games
+- Why maze, connect4, tic-tac-toe, PacMan?
 - Tried and abandoned:
+  - Animations (too complex)
   - Overly complex input methods.
   - Fancy AI (we realized a solid player-vs-player was challenging enough!).
   - Some display features that broke compatibility.
@@ -52,20 +56,41 @@ comment:  A student project report and presentation about programming classic ga
 
 ---
 
-## 5. Historic Facts
+## 5. Historic Facts and interesting tidbits
 
-- **Maze**: Guide a player through a grid avoiding walls to reach the goal.
-- **Connect4**: Two players drop pieces into a board, aiming for four in a row (horizontal, vertical, diagonal).
-- Both games:
-  - Use grid logic and turn-based mechanics.
-  - Require robust handling of user input and clear win/draw detection.
-- You'll see Python concepts like loops, lists, and function calls in action.
+![Maze](Multimedia/maze-illustrations.jpeg)
+
+- **Maze**:
+  - Labyrinths have been around for at least 4,000 years, appearing in various cultures and religions.
+  - Difference between Labyrinths and Mazes
+    - Labyrinth(Unicursal): One path from Start- to Endpoint. No dead ends. Impossible to go wrong way
+    - Maze(Multicursal): Many dead ends. Multiple paths to choose from
+  - Mazes were created in the Renaissance for Entertainment purposes
+
+---
+
+![Connect4](Multimedia/connect4jpg.jpg)
+
+- **Connect4**:
+  - Recently created game but apparently Captain James Cook (British Navy Salesman) in the 18th Century
+
+---
+
+![TicTacToe](Multimedia/tictactoe.png)
+
 - **TicTacToe**:
   - *Roman Empire:* The earliest ancestor was called "Terni Lapilli."
   - *19th Century:* The modern name "Tic-Tac-Toe" appeared.
   - *1952:* "OXO" became one of the first-ever graphical computer games.
 
+---
 
+![PacMan](Multimedia/PacMan.jpeg)
+
+- **PacMan**:
+  - 22. Mai 1980 as *Puck Man* by Namco
+  - Designer: Toru Iwatani
+  
 ---
 
 ## 6. Code (Product)
@@ -154,11 +179,20 @@ comment:  A student project report and presentation about programming classic ga
 - Stronger Python coding skills and confidence in tackling new problems.
 - A better sense of how to break big problems into manageable pieces.
 - The satisfaction of turning an idea into a playable reality—and sharing it with others.
+- Understanding how to wield AI-Tools to your advantage
+  - Using it carelessly with do more harm than good
+- Documentation is important for reviewing your code
 
 ---
 
 ## 11. Final thought/take-home message
 
+![Relationship between AI vs. You](Multimedia/AIvsYou.gif)
 > "Programming is like solving a puzzle: sometimes you get stuck, but every piece you place brings you closer to the big picture. Keep going, and celebrate every win—even the small ones!"
+
+- Never use LLM's/AI without oversight
+- Always use version control
+- Debugging is very important
+- Be patient: The code will not work on the first try (except when you are a genius)
 
 ---
