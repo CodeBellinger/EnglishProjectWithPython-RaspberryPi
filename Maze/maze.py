@@ -76,25 +76,15 @@ def map_fade(display, *args):
     - display.fade(r, g, b) für 'display'
     - display.fade(level) für 'display_emu'
     """
-    # Prüfen, ob das Ziel ein 'display_emu' ist (z.B. an Methoden oder Attributen erkennbar)
-    if 'ulib.display_emu' in sys.modules:  # Check if we're using display_emu
-        # display_emu erwartet nur ein Argument
-        if len(args) == 3:
-            # Typisch: fade(r, g, b) -> konvertiere zu Helligkeit
-            return display.fade(args[0], args[0], args[0])
-        elif len(args) == 1:
-            return display.fade(args[0])
-        else:
-            raise ValueError("Falsche Anzahl an Argumenten für display_emu.fade")
+    # Support both map_fade(display, 0.5, 0.5, 0.5) and map_fade(display, (0.5, 0.5, 0.5))
+    if len(args) == 1 and isinstance(args[0], (tuple, list)):
+        args = args[0]
+    if 'ulib.display_emu' in sys.modules:
+        # display_emu expects a single tuple
+        return display.fade(tuple(args))
     else:
-        # 'display' erwartet drei Argumente
-        if len(args) == 3:
-            return display.fade(*args)
-        elif len(args) == 1:
-            # Falls nur ein Wert, setze alle Farben gleich
-            return display.fade(args[0], args[0], args[0])
-        else:
-            raise ValueError("Falsche Anzahl an Argumenten für display.fade")
+        # display expects three separate arguments
+        return display.fade(*args)
 
 def create_grid(rows, cols, initial_value):
     """Initializes a 2D grid with a given initial value."""
@@ -335,7 +325,7 @@ def draw_scrolling_text(y_pos, text, color, scroll_speed=0.05):
                         unified_y, unified_x = map_coordinates(screen_y, screen_x)
                         display.set_xy((unified_y, unified_x), pixel)
         # Apply fade during scrolling text
-        map_fade(display, (0.5, 0.5, 0.5))
+        map_fade(display, 0.5, 0.5, 0.5)
         time.sleep(scroll_speed)
 
 def draw_maze():
@@ -359,7 +349,7 @@ def draw_maze():
     display.set_xy((player_y, player_x), COLOR_PLAYER)
 
     # Apply fade before showing the display
-    map_fade(display, (0.5, 0.5, 0.5))
+    map_fade(display, 0.5, 0.5, 0.5)
 
 def display_win_screen(final_time):
     global lowest_time
@@ -374,7 +364,7 @@ def display_win_screen(final_time):
     # Apply fade to dim the display during the win screen
     unified_y, unified_x = map_coordinates((WIDTH - 15) // 2, 6)
     display.set_xy((unified_y, unified_x), COLOR_TEXT)
-    map_fade(display, (0.5, 0.5, 0.5))
+    map_fade(display, 0.5, 0.5, 0.5)
     time.sleep(2)
 
     # Scroll the result
