@@ -48,6 +48,32 @@ def map_coordinates(x, y):
         return x, y  # No adjustment needed for display_emu
     else:
         return y, x  # Flip the coordinates for the real LED box/display module
+    
+def map_fade(display, *args):
+    """
+    Wrapper für display.fade, die die Diskrepanzen zwischen display und display_emu berücksichtigt.
+    - display.fade(r, g, b) für 'display'
+    - display.fade(level) für 'display_emu'
+    """
+    # Prüfen, ob das Ziel ein 'display_emu' ist (z.B. an Methoden oder Attributen erkennbar)
+    if 'ulib.display_emu' in sys.modules:  # Check if we're using display_emu
+        # display_emu erwartet nur ein Argument
+        if len(args) == 3:
+            # Typisch: fade(r, g, b) -> konvertiere zu Helligkeit
+            return display.fade(args[0], args[0], args[0])
+        elif len(args) == 1:
+            return display.fade(args[0])
+        else:
+            raise ValueError("Falsche Anzahl an Argumenten für display_emu.fade")
+    else:
+        # 'display' erwartet drei Argumente
+        if len(args) == 3:
+            return display.fade(*args)
+        elif len(args) == 1:
+            # Falls nur ein Wert, setze alle Farben gleich
+            return display.fade(args[0], args[0], args[0])
+        else:
+            raise ValueError("Falsche Anzahl an Argumenten für display.fade")
 
 def draw_char(char, start_x, start_y, color):
     """Draws a single character at a given (start_x, start_y) coordinate."""
@@ -86,7 +112,7 @@ def draw_board(blink_state = False):
                 display.set_xy((unified_r, unified_c), pixel_color)
 
     # Update the physical display with dim
-    display.fade(0.5, 0.5, 0.5)
+    map_fade(display, (0.5, 0.5, 0.5))
 
 def draw_pixel(x, y, color):
     # Ensure coordinates are within display boundaries
@@ -140,7 +166,7 @@ def animate_winner_text(winner_color, player_number):
                             display.set_xy((unified_y, unified_x), winner_color)  # Correctly mapped coordinates
             current_x += (char_width + current_char_spacing)  # Move to the next character position
 
-        display.fade(0.5, 0.5, 0.5)
+        map_fade(display, (0.5, 0.5, 0.5))
         time.sleep(0.8) # Text visible for 0.8 seconds
 
         display.fill(EMPTY_COLOR) # Clear screen for blink off
@@ -169,7 +195,7 @@ def animate_fireworks(winner_color):
             display.fill(EMPTY_COLOR) # Clear previous frame (now (0,0,0))
             unified_y, unified_start_x = map_coordinates(y, start_x)
             display.set_xy((unified_y, unified_start_x), winner_color)
-            display.fade(0.5, 0.5, 0.5)
+            map_fade(display, (0.5, 0.5, 0.5))
             time.sleep(0.05)
 
         # --- Explosion phase ---
@@ -219,7 +245,7 @@ def animate_fireworks(winner_color):
                         faded_color = (faded_r, faded_g, faded_b)
                         unified_draw_y, unified_draw_x = map_coordinates(draw_y, draw_x)
                         display.set_xy((unified_draw_y, unified_draw_x), faded_color)
-            display.fade(0.5, 0.5, 0.5)
+            map_fade(display, (0.5, 0.5, 0.5))
             time.sleep(0.05)
 
         time.sleep(0.2) # Pause between fireworks bursts
