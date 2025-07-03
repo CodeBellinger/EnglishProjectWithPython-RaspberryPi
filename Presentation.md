@@ -65,7 +65,7 @@ comment:  A student project report and presentation about programming classic ga
 
 ## Big picture
 
-![UML Diagram](https://github.com/CodeBellinger/EnglishProjectWithPython-RaspberryPi/blob/main/TicTacToe/UML-Diagram%20f%C3%BCr%20TicTacToe.jpg)
+![UML Diagram](TicTacToe/UML-Diagram%20für%20TicTacToe.jpg)
 
 - Both games center around a main loop: get input → update state → draw board.
 - **Maze**: Tracks player position, checks for collisions, redraws after each move.
