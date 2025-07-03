@@ -109,14 +109,7 @@ comment:  A student project report and presentation about programming classic ga
 
 ## Important code snippets
 
-- **Maze win-check:**
-
-```python
-if player_pos == destination_pos:
-    print("You win!")
-```
-
-- **Connect4 win-detection:**
+- **Generating Maze with recursive backtracker algorithm:**
 
 ```python
 def generate_maze_recursive_backtracker():
@@ -191,6 +184,8 @@ def generate_maze_recursive_backtracker():
             stack.pop()
 ```
 
+- **Connect4 win-detection:**
+
 ```python
 def check_win(game_board, player):
     # Determine the color of the current player
@@ -249,6 +244,8 @@ def check_win(game_board, player):
                 return True
     return False
 ```
+
+- **Handle imput for TicTacToe**
 
 ```python
 def handle_input(self, key: str):
