@@ -48,10 +48,12 @@ comment:  A student project report and presentation about programming classic ga
 - Everybody knows how to play retro games
 - Why maze, connect4, tic-tac-toe, PacMan?
 - Tried and abandoned:
+
   - Animations (too complex)
   - Overly complex input methods.
   - Fancy AI (we realized a solid player-vs-player was challenging enough!).
   - Some display features that broke compatibility.
+
 - The main insight: Simpler is often better—and finishing a game is harder than it looks!
 
 ---
@@ -95,13 +97,13 @@ comment:  A student project report and presentation about programming classic ga
 
 ## 6. Code (Product)
 
-## Big picture
-
 ![UML Diagram](TicTacToe/UML-DiagramTicTacToe.jpg)
 
 - Both games center around a main loop: get input → update state → draw board.
 - **Maze**: Tracks player position, checks for collisions, redraws after each move.
 - **Connect4**: Manages board state, alternates players, checks for wins or draws.
+- **PacMan**: Checking which field the player wants to choose and check with a list ghosts and walls
+- **TicTacToe**: Checks which fields are open vs. occupied. Win condition is checked (three of a kind in one line)
 
 ---
 
@@ -109,18 +111,18 @@ comment:  A student project report and presentation about programming classic ga
 
 - **Maze win-check:**
 
-    ```python
-    if player_pos == destination_pos:
-        print("You win!")
-    ```
+```python
+if player_pos == destination_pos:
+    print("You win!")
+```
 
 - **Connect4 win-detection:**
 
-    ```python
-    def check_win(board, player):
-        # Check horizontal, vertical, and diagonal for a win
-        ...
-    ```
+```python
+def check_win(board, player):
+    # Check horizontal, vertical, and diagonal for a win
+    ...
+```
 
 ---
 
@@ -130,6 +132,8 @@ comment:  A student project report and presentation about programming classic ga
 - Remote input and keyboard sometimes desynchronized, causing missed moves.
 - Display incompatibilities: `display.fade()` needed a compatibility wrapper for different environments.
 - Mapping coordinates between display and emulator required a conversion layer (like `map_coordinates()`).
+- TicTacToe: Cannot find library
+- PacMan: Difficulties with the game logic
 
 ---
 
@@ -141,6 +145,8 @@ comment:  A student project report and presentation about programming classic ga
   - Debugging strategies for hard-to-find bugs.
   - Writing modular, reusable code (especially for display compatibility).
   - The importance of clear commit messages and version control!
+  - Everything in python is basically an object
+  - Some things are more difficult than it seems
 
 ---
 
@@ -161,8 +167,8 @@ comment:  A student project report and presentation about programming classic ga
 
 - **Maze**: Move the player with arrow keys or remote input, avoid obstacles, and reach the target.
 - **Connect4**: Take turns dropping pieces, trying to outsmart your opponent (or yourself).
-- **TicTacToe**:
-- **PacMan**:
+- **TicTacToe**: Player 1 vs. Player 2. Determining Move order and winner starts with first move
+- **PacMan**: Choose between four fields and start playing
 
 ---
 
