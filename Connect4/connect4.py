@@ -48,22 +48,7 @@ def map_coordinates(x, y):
         return x, y  # No adjustment needed for display_emu
     else:
         return y, x  # Flip the coordinates for the real LED box/display module
-    
-def map_fade(display, *args):
-    """
-    Wrapper für display.fade, die die Diskrepanzen zwischen display und display_emu berücksichtigt.
-    - display.fade(r, g, b) für 'display'
-    - display.fade(level) für 'display_emu'
-    """
-    # Support both map_fade(display, 0.5, 0.5, 0.5) and map_fade(display, (0.5, 0.5, 0.5))
-    if len(args) == 1 and isinstance(args[0], (tuple, list)):
-        args = args[0]
-    if 'ulib.display_emu' in sys.modules:
-        # display_emu expects a single tuple
-        return display.fade(tuple(args))
-    else:
-        # display expects three separate arguments
-        return display.fade(*args)
+
 
 def draw_char(char, start_x, start_y, color):
     """Draws a single character at a given (start_x, start_y) coordinate."""
@@ -102,7 +87,7 @@ def draw_board(blink_state = False):
                 display.set_xy((unified_r, unified_c), pixel_color)
 
     # Update the physical display with dim
-    map_fade(display, 0.5, 0.5, 0.5)
+    display.fade((0.5, 0.5, 0.5))
 
 def draw_pixel(x, y, color):
     # Ensure coordinates are within display boundaries
@@ -156,7 +141,7 @@ def animate_winner_text(winner_color, player_number):
                             display.set_xy((unified_y, unified_x), winner_color)  # Correctly mapped coordinates
             current_x += (char_width + current_char_spacing)  # Move to the next character position
 
-        map_fade(display, 0.5, 0.5, 0.5)
+        display.fade((0.5, 0.5, 0.5))
         time.sleep(0.8) # Text visible for 0.8 seconds
 
         display.fill(EMPTY_COLOR) # Clear screen for blink off
@@ -185,7 +170,7 @@ def animate_fireworks(winner_color):
             display.fill(EMPTY_COLOR) # Clear previous frame (now (0,0,0))
             unified_y, unified_start_x = map_coordinates(y, start_x)
             display.set_xy((unified_y, unified_start_x), winner_color)
-            map_fade(display, 0.5, 0.5, 0.5)
+            display.fade((0.5, 0.5, 0.5))
             time.sleep(0.05)
 
         # --- Explosion phase ---
